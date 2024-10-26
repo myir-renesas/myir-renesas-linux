@@ -79,6 +79,22 @@
 		regulator-always-on;
 	};
 
+    leds {
+		compatible = "gpio-leds";
+		led0 {
+				gpios = <&pinctrl RZT2H_GPIO(21, 6) GPIO_ACTIVE_LOW>;
+				label = "Blue";
+				default-state = "on";
+				linux,default-trigger = "heartbeat";
+		};
+		led1 {
+				gpios = <&pinctrl RZT2H_GPIO(26, 3) GPIO_ACTIVE_LOW>;
+				label = "Green";
+				default-state = "on";
+				linux,default-trigger = "heartbeat";
+		};
+    };
+
 };
 
 &pinctrl {
@@ -150,8 +166,6 @@
 	ethsw_pins: ethsw_pins {
 		pinmux = <RZT2H_PORT_PINMUX(21, 4, 0x11)>,      /* ETHSW_MDC */
 			 <RZT2H_PORT_PINMUX(21, 5, 0x11)>,      /* ETHSW_MDIO */
-			 <RZT2H_PORT_PINMUX(21, 6, 0x11)>,      /* ETHSW_PHYLINK0 */
-			 <RZT2H_PORT_PINMUX(26, 3, 0x11)>,      /* ETHSW_PHYLINK1 */
 			 <RZT2H_PORT_PINMUX(30, 7, 0x11)>;      /* ETHSW_PHYLINK2 */
 	};
 
