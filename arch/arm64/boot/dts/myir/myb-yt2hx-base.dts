@@ -22,6 +22,7 @@
 		serial0 = &sci0;
 		serial1 = &sci1;
 		serial3 = &sci3;
+		serial4 = &sci4;
 		mmc0 = &sdhi0;
 		mmc1 = &sdhi1;
 		i2c0 = &i2c0;
@@ -115,8 +116,13 @@
 	};
 
 	sci3_pins: sci3 {
-		pinmux = <RZT2H_PORT_PINMUX(13, 5, 0x14)>, /* SCI0_TXD */
-			 <RZT2H_PORT_PINMUX(13, 4, 0x14)>; /* SCI0_RXD */
+		pinmux = <RZT2H_PORT_PINMUX(13, 5, 0x14)>, /* SCI3_TXD */
+			 <RZT2H_PORT_PINMUX(13, 4, 0x14)>; /* SCI3_RXD */
+	};
+
+	sci4_pins: sci4 {
+		pinmux = <RZT2H_PORT_PINMUX(14, 3, 0x14)>, /* SCI4_TXD */
+			 <RZT2H_PORT_PINMUX(14, 2, 0x14)>; /* SCI4_RXD */
 	};
 
 	sdhi0_pins: sd0 {
@@ -153,14 +159,9 @@
 		};
 	};
 
-	i2c0_pins: i2c0 {
-		pinmux = <RZT2H_PORT_PINMUX(23, 3, 0x17)>, /* SDA */
-			<RZT2H_PORT_PINMUX(23, 4, 0x17)>; /* SCL */
-	};
-
-	i2c1_pins: i2c1 {
-		pinmux = <RZT2H_PORT_PINMUX(5, 0, 0x17)>, /* SDA */
-			<RZT2H_PORT_PINMUX(4, 7, 0x17)>; /* SCL */
+	i2c2_pins: i2c2 {
+        		pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x17)>, /* SDA */
+             			<RZT2H_PORT_PINMUX(7, 1, 0x17)>; /* SCL */
 	};
 
 	mdio1_pins: gmac_mdio1 {
@@ -382,6 +383,7 @@
 	status = "okay";
 };
 
+/*RS485*/
 &sci3 {
 	pinctrl-0 = <&sci3_pins>;
 	pinctrl-names = "default";
@@ -389,7 +391,13 @@
 	rs485-rx-during-tx;
 	rs485-enabled;
 	rts-gpios = <&pinctrl RZT2H_GPIO(14, 0) (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+	status = "okay";
+};
 
+/*RS232*/
+&sci4 {
+	pinctrl-0 = <&sci4_pins>;
+	pinctrl-names = "default";
 	status = "okay";
 };
 
@@ -423,17 +431,31 @@
 };
 
 &i2c0 {
-	pinctrl-0 = <&i2c0_pins>;
-	pinctrl-names = "default";
-
-	status = "okay";
+	status = "disabled";
 };
 
 &i2c1 {
-	pinctrl-0 = <&i2c1_pins>;
+	status = "disabled";
+};
+
+&i2c2 {
+	pinctrl-0 = <&i2c2_pins>;
 	pinctrl-names = "default";
 	status = "okay";
+
+	E2PROM:24C256C@50 {
+			compatible = "atmel,24c256";
+			reg = <0x50>;
+			pagesize = <64>;
+	};
+
+	lkrtc: hym8563@51 {
+			compatible = "haoyu,hym8563";
+			reg = <0x51>;
+			#clock-cells = <0>;
+	};
 };
+
 
 &wdt2 {
 	status = "okay";
