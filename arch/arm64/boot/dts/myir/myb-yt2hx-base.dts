@@ -95,6 +95,16 @@
 		};
     };
 
+    keyboard {
+		compatible = "gpio-keys";
+		status = "okay";
+		key-1 {
+				interrupt-parent = <&pinctrl>;
+				interrupts = <RZT2H_GPIO(30, 7) IRQ_TYPE_LEVEL_LOW>;
+				// linux,code = <KEY_1>;
+				label = "user_key";
+		};
+    };
 };
 
 &pinctrl {
@@ -165,8 +175,7 @@
 
 	ethsw_pins: ethsw_pins {
 		pinmux = <RZT2H_PORT_PINMUX(21, 4, 0x11)>,      /* ETHSW_MDC */
-			 <RZT2H_PORT_PINMUX(21, 5, 0x11)>,      /* ETHSW_MDIO */
-			 <RZT2H_PORT_PINMUX(30, 7, 0x11)>;      /* ETHSW_PHYLINK2 */
+			 <RZT2H_PORT_PINMUX(21, 5, 0x11)>;      /* ETHSW_MDIO */
 	};
 
 	pins_refclk: pins_refclk {
