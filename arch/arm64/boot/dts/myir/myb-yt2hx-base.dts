@@ -96,16 +96,16 @@
 		};
     };
 
-    keyboard {
-		compatible = "gpio-keys";
-		status = "okay";
-		key-1 {
-				interrupt-parent = <&pinctrl>;
-				interrupts = <RZT2H_GPIO(30, 7) IRQ_TYPE_LEVEL_LOW>;
-				// linux,code = <KEY_1>;
-				label = "user_key";
-		};
-    };
+    // keyboard {
+	// 	compatible = "gpio-keys";
+	// 	status = "okay";
+	// 	key-1 {
+	// 			interrupt-parent = <&pinctrl>;
+	// 			interrupts = <RZT2H_GPIO(30, 7) IRQ_TYPE_LEVEL_LOW>;
+	// 			// linux,code = <KEY_1>;
+	// 			label = "user_key";
+	// 	};
+    // };
 };
 
 &pinctrl {
