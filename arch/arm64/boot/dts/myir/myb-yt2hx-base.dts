@@ -1,0 +1,724 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Device Tree Source for the MYiR-T2H Development EVK board
+ *
+ * Copyright (C) 2024 MYiR Electronics Corp.
+ */
+
+/dts-v1/;
+#include "r9a09g077.dtsi"
+#include <dt-bindings/pinctrl/rzt2h-pinctrl.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/net/rzt2h-ethss.h>
+#include <dt-bindings/net/mscc-phy-vsc8531.h>
+
+
+/ {
+	model = "Renesas Development EVK based on r9a09g077m44";
+	compatible = "renesas,r9a09g077m44-dev", "renesas,r9a09g077m44", "renesas,r9a09g077";
+
+
+	aliases {
+		serial0 = &sci0;
+		serial1 = &sci1;
+		serial3 = &sci3;
+		mmc0 = &sdhi0;
+		mmc1 = &sdhi1;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		i2c2 = &i2c2;
+		ethernet0 = &gmac1;
+		ethernet1 = &gmac2;
+	};
+
+	chosen {
+		bootargs = "ignore_loglevel";
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@C4000000 {
+		device_type = "memory";
+		reg = <0x0 0xC4000000 0x0 0x3C000000>;
+	};
+
+	memory@240000000 {
+		device_type = "memory";
+		reg = <0x2 0x40000000 0x1 0xC0000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		global_cma: linux,cma@E0000000 {
+			compatible = "shared-dma-pool";
+			linux,cma-default;
+			reusable;
+			reg = <0x0 0xD0000000 0x0 0x10000000>;
+		};
+	};
+
+	reg_1p8v: regulator0 {
+		compatible = "regulator-fixed";
+
+		regulator-name = "fixed-1.8V";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	reg_3p3v: regulator1 {
+		compatible = "regulator-fixed";
+
+		regulator-name = "fixed-3.3V";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+};
+
+&pinctrl {
+
+	sci0_pins: sci0 {
+		pinmux = <RZT2H_PORT_PINMUX(27, 5, 0x14)>, /* SCI0_TXD */
+			 <RZT2H_PORT_PINMUX(27, 4, 0x14)>; /* SCI0_RXD */
+	};
+
+	sci3_pins: sci3 {
+		pinmux = <RZT2H_PORT_PINMUX(13, 5, 0x14)>, /* SCI0_TXD */
+			 <RZT2H_PORT_PINMUX(13, 4, 0x14)>; /* SCI0_RXD */
+	};
+
+	sdhi0_pins: sd0 {
+		sd0_data {
+			pinmux = <RZT2H_PORT_PINMUX(12, 2, 0x29)>, /* SD0_DATA0 */
+				 <RZT2H_PORT_PINMUX(12, 3, 0x29)>, /* SD0_DATA1 */
+				 <RZT2H_PORT_PINMUX(12, 4, 0x29)>, /* SD0_DATA2 */
+				 <RZT2H_PORT_PINMUX(12, 5, 0x29)>, /* SD0_DATA3 */
+				 <RZT2H_PORT_PINMUX(12, 6, 0x29)>, /* SD0_DATA4 */
+				 <RZT2H_PORT_PINMUX(12, 7, 0x29)>, /* SD0_DATA5 */
+				 <RZT2H_PORT_PINMUX(13, 0, 0x29)>, /* SD0_DATA6 */
+				 <RZT2H_PORT_PINMUX(13, 1, 0x29)>; /* SD0_DATA7 */
+		};
+
+		sd0_ctrl {
+			pinmux = <RZT2H_PORT_PINMUX(12, 0, 0x29)>, /* SD0_CLK */
+				 <RZT2H_PORT_PINMUX(12, 1, 0x29)>, /* SD0_CMD */
+				 <RZT2H_PORT_PINMUX(22, 5, 0x29)>; /* SD0_CD  */
+		};
+	};
+
+	sdhi1_pins: sd1 {
+		sd1_data {
+			pinmux = <RZT2H_PORT_PINMUX(16, 7, 0x29)>, /* SD1_DATA0 */
+				 <RZT2H_PORT_PINMUX(17, 0, 0x29)>, /* SD1_DATA1 */
+				 <RZT2H_PORT_PINMUX(17, 1, 0x29)>, /* SD1_DATA2 */
+				 <RZT2H_PORT_PINMUX(17, 2, 0x29)>; /* SD1_DATA3 */
+		};
+
+		sd1_ctrl {
+			pinmux = <RZT2H_PORT_PINMUX(16, 5, 0x29)>, /* SD1_CLK */
+				 <RZT2H_PORT_PINMUX(16, 6, 0x29)>, /* SD1_CMD */
+				 <RZT2H_PORT_PINMUX(17, 4, 0x29)>; /* SD1_CD  */
+		};
+	};
+
+	i2c0_pins: i2c0 {
+		pinmux = <RZT2H_PORT_PINMUX(23, 3, 0x17)>, /* SDA */
+			<RZT2H_PORT_PINMUX(23, 4, 0x17)>; /* SCL */
+	};
+
+	i2c1_pins: i2c1 {
+		pinmux = <RZT2H_PORT_PINMUX(5, 0, 0x17)>, /* SDA */
+			<RZT2H_PORT_PINMUX(4, 7, 0x17)>; /* SCL */
+	};
+
+	mdio1_pins: gmac_mdio1 {
+		pinmux = <RZT2H_PORT_PINMUX(26, 1, 0x10)>,      /* MDIO1_MDC */
+			 <RZT2H_PORT_PINMUX(26, 2, 0x10)>;      /* MDIO1_MDIO */
+	};
+
+	mdio2_pins: gmac_mdio2 {
+		pinmux = <RZT2H_PORT_PINMUX(30, 5, 0x10)>,      /* MDIO2_MDC */
+			 <RZT2H_PORT_PINMUX(30, 6, 0x10)>;      /* MDIO2_MDIO */
+	};
+
+	ethsw_pins: ethsw_pins {
+		pinmux = <RZT2H_PORT_PINMUX(21, 4, 0x11)>,      /* ETHSW_MDC */
+			 <RZT2H_PORT_PINMUX(21, 5, 0x11)>,      /* ETHSW_MDIO */
+			 <RZT2H_PORT_PINMUX(21, 6, 0x11)>,      /* ETHSW_PHYLINK0 */
+			 <RZT2H_PORT_PINMUX(26, 3, 0x11)>,      /* ETHSW_PHYLINK1 */
+			 <RZT2H_PORT_PINMUX(30, 7, 0x11)>;      /* ETHSW_PHYLINK2 */
+	};
+
+	pins_refclk: pins_refclk {
+		pinmux = <RZT2H_PORT_PINMUX(21, 7, 0x02)>,	/* ETH0_REFCLK */
+			 <RZT2H_PORT_PINMUX(26, 4, 0x02)>,	/* ETH1_REFCLK */
+			 <RZT2H_PORT_PINMUX(31, 0, 0x02)>,	/* ETH2_REFCLK */
+			 <RZT2H_PORT_PINMUX(34, 6, 0x02)>;	/* ETH3_REFCLK */
+	};
+
+	eth0_pins: ethss_0 {
+		pinmux = <RZT2H_PORT_PINMUX(20, 0, 0x0F)>,      /* ETH0_TXCLK */
+			 <RZT2H_PORT_PINMUX(20, 1, 0x0F)>,      /* ETH0_TXD[0] */
+			 <RZT2H_PORT_PINMUX(20, 2, 0x0F)>,      /* ETH0_TXD[1] */
+			 <RZT2H_PORT_PINMUX(20, 3, 0x0F)>,      /* ETH0_TXD[2] */
+			 <RZT2H_PORT_PINMUX(20, 4, 0x0F)>,      /* ETH0_TXD[3] */
+			 <RZT2H_PORT_PINMUX(20, 5, 0x0F)>,      /* ETH0_TXEN */
+			 <RZT2H_PORT_PINMUX(20, 6, 0x0F)>,      /* ETH0_RXCLK */
+			 <RZT2H_PORT_PINMUX(20, 7, 0x0F)>,      /* ETH0_RXD[0] */
+			 <RZT2H_PORT_PINMUX(21, 0, 0x0F)>,      /* ETH0_RXD[1] */
+			 <RZT2H_PORT_PINMUX(21, 1, 0x0F)>,      /* ETH0_RXD[2] */
+			 <RZT2H_PORT_PINMUX(21, 2, 0x0F)>,      /* ETH0_RXD[3] */
+			 <RZT2H_PORT_PINMUX(21, 3, 0x0F)>,      /* ETH0_RXDV */
+			 <RZT2H_PORT_PINMUX(22, 1, 0x0F)>,      /* ETH0_TXER */
+			 <RZT2H_PORT_PINMUX(22, 2, 0x0F)>,      /* ETH0_RXER */
+			 <RZT2H_PORT_PINMUX(22, 3, 0x0F)>,      /* ETH0_CRS */
+			 <RZT2H_PORT_PINMUX(22, 4, 0x0F)>;      /* ETH0_COL */
+			input-schmitt-disable;
+			slew-rate       = <1>;
+			drive-strength  = <3>;
+	};
+
+	eth1_pins: ethss_1 {
+		pinmux = <RZT2H_PORT_PINMUX(24, 5, 0x0F)>,      /* ETH1_TXCLK */
+			 <RZT2H_PORT_PINMUX(24, 6, 0x0F)>,      /* ETH1_TXD[0] */
+			 <RZT2H_PORT_PINMUX(24, 7, 0x0F)>,      /* ETH1_TXD[1] */
+			 <RZT2H_PORT_PINMUX(25, 0, 0x0F)>,      /* ETH1_TXD[2] */
+			 <RZT2H_PORT_PINMUX(25, 1, 0x0F)>,      /* ETH1_TXD[3] */
+			 <RZT2H_PORT_PINMUX(25, 2, 0x0F)>,      /* ETH1_TXEN */
+			 <RZT2H_PORT_PINMUX(25, 3, 0x0F)>,      /* ETH1_RXCLK */
+			 <RZT2H_PORT_PINMUX(25, 4, 0x0F)>,      /* ETH1_RXD[0] */
+			 <RZT2H_PORT_PINMUX(25, 5, 0x0F)>,      /* ETH1_RXD[1] */
+			 <RZT2H_PORT_PINMUX(25, 6, 0x0F)>,      /* ETH1_RXD[2] */
+			 <RZT2H_PORT_PINMUX(25, 7, 0x0F)>,      /* ETH1_RXD[3] */
+			 <RZT2H_PORT_PINMUX(26, 0, 0x0F)>,      /* ETH1_RXDV */
+			 <RZT2H_PORT_PINMUX(26, 6, 0x0F)>,      /* ETH1_TXER */
+			 <RZT2H_PORT_PINMUX(26, 7, 0x0F)>,      /* ETH1_RXER */
+			 <RZT2H_PORT_PINMUX(27, 0, 0x0F)>,      /* ETH1_CRS */
+			 <RZT2H_PORT_PINMUX(27, 1, 0x0F)>;      /* ETH1_COL */
+			input-schmitt-disable;
+			slew-rate       = <1>;
+			drive-strength  = <3>;
+	};
+
+	eth2_pins: ethss_2 {
+		pinmux = <RZT2H_PORT_PINMUX(29, 1, 0x0F)>,      /* ETH2_TXCLK */
+			 <RZT2H_PORT_PINMUX(29, 2, 0x0F)>,      /* ETH2_TXD[0] */
+			 <RZT2H_PORT_PINMUX(29, 3, 0x0F)>,      /* ETH2_TXD[1] */
+			 <RZT2H_PORT_PINMUX(29, 4, 0x0F)>,      /* ETH2_TXD[2] */
+			 <RZT2H_PORT_PINMUX(29, 5, 0x0F)>,      /* ETH2_TXD[3] */
+			 <RZT2H_PORT_PINMUX(29, 6, 0x0F)>,      /* ETH2_TXEN */
+			 <RZT2H_PORT_PINMUX(29, 7, 0x0F)>,      /* ETH2_RXCLK */
+			 <RZT2H_PORT_PINMUX(30, 0, 0x0F)>,      /* ETH2_RXD[0] */
+			 <RZT2H_PORT_PINMUX(30, 1, 0x0F)>,      /* ETH2_RXD[1] */
+			 <RZT2H_PORT_PINMUX(30, 2, 0x0F)>,      /* ETH2_RXD[2] */
+			 <RZT2H_PORT_PINMUX(30, 3, 0x0F)>,      /* ETH2_RXD[3] */
+			 <RZT2H_PORT_PINMUX(30, 4, 0x0F)>,      /* ETH2_RXDV */
+			 <RZT2H_PORT_PINMUX(31, 2, 0x0F)>,      /* ETH2_TXER */
+			 <RZT2H_PORT_PINMUX(31, 3, 0x0F)>,      /* ETH2_RXER */
+			 <RZT2H_PORT_PINMUX(31, 4, 0x0F)>,      /* ETH2_CRS */
+			 <RZT2H_PORT_PINMUX(31, 5, 0x0F)>;      /* ETH2_COL */
+			input-schmitt-disable;
+			slew-rate       = <1>;
+			drive-strength  = <3>;
+	};
+
+	eth3_pins: ethss_3 {
+		pinmux = <RZT2H_PORT_PINMUX(33, 2, 0x0F)>,	/* ETH3_TXCLK */
+			 <RZT2H_PORT_PINMUX(33, 3, 0x0F)>,	/* ETH3_TXD[0] */
+			 <RZT2H_PORT_PINMUX(33, 4, 0x0F)>,	/* ETH3_TXD[1] */
+			 <RZT2H_PORT_PINMUX(33, 5, 0x0F)>,	/* ETH3_TXD[2] */
+			 <RZT2H_PORT_PINMUX(33, 6, 0x0F)>,	/* ETH3_TXD[3] */
+			 <RZT2H_PORT_PINMUX(33, 7, 0x0F)>,	/* ETH3_TXEN */
+			 <RZT2H_PORT_PINMUX(34, 0, 0x0F)>,	/* ETH3_RXCLK */
+			 <RZT2H_PORT_PINMUX(34, 1, 0x0F)>,	/* ETH3_RXD[0] */
+			 <RZT2H_PORT_PINMUX(34, 2, 0x0F)>,	/* ETH3_RXD[1] */
+			 <RZT2H_PORT_PINMUX(34, 3, 0x0F)>,	/* ETH3_RXD[2] */
+			 <RZT2H_PORT_PINMUX(34, 4, 0x0F)>,	/* ETH3_RXD[3] */
+			 <RZT2H_PORT_PINMUX(34, 5, 0x0F)>,	/* ETH3_RXDV */
+			 <RZT2H_PORT_PINMUX(34, 7, 0x0F)>,	/* ETH3_TXER */
+			 <RZT2H_PORT_PINMUX(35, 0, 0x0F)>,	/* ETH3_RXER */
+			 <RZT2H_PORT_PINMUX(35, 1, 0x0F)>,	/* ETH3_CRS */
+			 <RZT2H_PORT_PINMUX(35, 2, 0x0F)>;	/* ETH3_COL */
+			input-schmitt-disable;
+			slew-rate       = <1>;
+			drive-strength  = <3>;
+	};
+
+
+#if (SEL_OTG)
+	usb_exicen_a {
+		gpio-hog;
+		gpios = <RZT2H_GPIO(0, 2) GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb_exicen_a";
+	};
+#endif
+
+	usb_pins: usb_pins {
+		pinmux = <RZT2H_PORT_PINMUX(0, 0, 0x13)>; /* VBUS */
+	};
+
+	xspi0_pins: xspi0 {
+		xspi0_clk {
+			pinmux = <RZT2H_PORT_PINMUX(5, 1, 0x1C)>, /* XSPI0_CKP */
+				 <RZT2H_PORT_PINMUX(5, 2, 0x1C)>; /* XSPI0_CKN */
+		};
+
+		xspi0_data {
+			pinmux = <RZT2H_PORT_PINMUX(5, 6, 0x1C)>, /* XSPI0_IO0 */
+				<RZT2H_PORT_PINMUX(5, 7, 0x1C)>, /* XSPI0_IO1 */
+				<RZT2H_PORT_PINMUX(6, 0, 0x1C)>, /* XSPI0_IO2 */
+				<RZT2H_PORT_PINMUX(6, 1, 0x1C)>, /* XSPI0_IO3 */
+				<RZT2H_PORT_PINMUX(6, 2, 0x1C)>, /* XSPI0_IO4 */
+				<RZT2H_PORT_PINMUX(6, 3, 0x1C)>, /* XSPI0_IO5 */
+				<RZT2H_PORT_PINMUX(6, 4, 0x1C)>, /* XSPI0_IO6 */
+				<RZT2H_PORT_PINMUX(6, 5, 0x1C)>; /* XSPI0_IO7 */
+		};
+
+		xspi0_cs {
+			pinmux = <RZT2H_PORT_PINMUX(5, 3, 0x1C)>; /* XSPI0_CS0 */
+		};
+
+		xspi0_rst {
+			pinmux = <RZT2H_PORT_PINMUX(6, 6, 0x1C)>; /* XSPI0_RESET0 */
+		};
+
+		xspi0_ds {
+			pinmux = <RZT2H_PORT_PINMUX(5, 5, 0x1C)>; /* XSPI0_DS */
+		};
+	};
+
+	xspi1_pins: xspi1 {
+		xspi1_clk {
+			pinmux = <RZT2H_PORT_PINMUX(1, 0, 0x1C)>; /* XSPI1_CKP */
+		};
+
+		xspi1_data {
+			pinmux = <RZT2H_PORT_PINMUX(1, 4, 0x1C)>, /* XSPI1_IO0 */
+				 <RZT2H_PORT_PINMUX(1, 5, 0x1C)>, /* XSPI1_IO1 */
+				 <RZT2H_PORT_PINMUX(1, 6, 0x1C)>, /* XSPI1_IO2 */
+				 <RZT2H_PORT_PINMUX(1, 7, 0x1C)>; /* XSPI1_IO3 */
+		};
+
+		xspi1_cs {
+			pinmux = <RZT2H_PORT_PINMUX(1, 1, 0x1C)>; /* XSPI1_CS0 */
+		};
+	};
+
+	icu_pins: icu_pins {
+		pinmux = <RZT2H_PORT_PINMUX(8, 7, 0x0)>, /* IRQ0 */
+			<RZT2H_PORT_PINMUX(0, 3, 0x0)>; /* IRQ2 */
+	};
+
+	can0_pins: can0 {
+		pinmux = <RZT2H_PORT_PINMUX(24, 3, 0x19)>, /* RX */
+			 <RZT2H_PORT_PINMUX(24, 4, 0x19)>; /* TX */
+	};
+
+	adc0_pins: adc0 {
+		pinmux = <RZT2H_PORT_PINMUX(4, 4, 0x1f)>; /* ADCTRG0# */
+	};
+
+	adc1_pins: adc1 {
+		pinmux = <RZT2H_PORT_PINMUX(4, 5, 0x1f)>; /* ADCTRG1# */
+	};
+
+	adc2_pins: adc2 {
+		pinmux = <RZT2H_PORT_PINMUX(4, 6, 0x1f)>; /* ADCTRG2# */
+	};
+
+	sci1_pins: sci1 {
+		pinmux = <RZT2H_PORT_PINMUX(18, 4, 0x14)>, /* SCI1_TXD */
+			 <RZT2H_PORT_PINMUX(18, 3, 0x14)>; /* SCI1_RXD */
+		bias-pull-up;
+	};
+
+};
+
+&extal {
+	clock-frequency = <25000000>;
+};
+
+&dmac0 {
+	memory-region = <&global_cma>;
+};
+
+&loco {
+	clock-frequency = <1000000>;
+};
+
+&sci0 {
+	pinctrl-0 = <&sci0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&sci3 {
+	pinctrl-0 = <&sci3_pins>;
+	pinctrl-names = "default";
+	linux,rs485-enabled-at-boot-time;
+	rs485-rx-during-tx;
+	rs485-enabled;
+	rts-gpios = <&pinctrl RZT2H_GPIO(14, 0) (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+
+	status = "okay";
+};
+
+/*eMMC*/
+&sdhi0 {
+	vmmc-supply = <&reg_3p3v>;
+	vqmmc-supply = <&reg_1p8v>;
+	bus-width = <8>;
+	non-removable;
+	mmc-hs200-1_8v;
+	fixed-emmc-driver-type = <1>;
+	status = "okay";
+};
+
+/*TF*/
+&sdhi1 {
+	pinctrl-0 = <&sdhi1_pins>;
+	pinctrl-names = "default";
+
+	vmmc-supply = <&reg_3p3v>;
+	vqmmc-supply = <&reg_3p3v>;
+	bus-width = <4>;
+	sd-uhs-sdr50;
+	sd-uhs-sdr104;
+	status = "okay";
+};
+
+&spi0 {
+	status = "disabled";
+};
+
+&i2c0 {
+	pinctrl-0 = <&i2c0_pins>;
+	pinctrl-names = "default";
+
+	status = "okay";
+};
+
+&i2c1 {
+	pinctrl-0 = <&i2c1_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&wdt2 {
+	status = "okay";
+	timeout-sec = <60>;
+};
+
+&wdt3 {
+	status = "okay";
+	timeout-sec = <60>;
+};
+
+&wdt4 {
+	status = "okay";
+	timeout-sec = <60>;
+};
+
+&wdt5 {
+	status = "okay";
+	timeout-sec = <60>;
+};
+
+&gmac0 {
+	status = "okay";
+	phy-mode = "gmii";
+	ethss-handle = <&ethss>;
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&gmac1 {
+	phy-handle = <&phy3>;
+	phy-mode = "rgmii-id";
+	pcs-handle = <&mii_conv3>;
+	status = "okay";
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&mdio1_pins>;
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy3: ethernet-phy@3 {
+			compatible = "ethernet-phy-id0007.0772";
+			phy-mode = "rgmii-id";
+			vsc8531,led-1-mode = <VSC8531_FORCE_LED_ON>;
+			reg = <3>;
+		};
+	};
+};
+
+&gmac2 {
+	phy-handle = <&phy2>;
+	phy-mode = "rgmii-id";
+	pcs-handle = <&mii_conv2>;
+	status = "okay";
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_HIGH>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&mdio2_pins>;
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy2: ethernet-phy@2 {
+			compatible = "ethernet-phy-id0007.0772";
+			phy-mode = "rgmii-id";
+			vsc8531,led-1-mode = <VSC8531_FORCE_LED_ON>;
+			reg = <2>;
+		};
+	};
+};
+
+&ethss {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pins_refclk>, <&eth0_pins>, <&eth1_pins>, <&eth2_pins>, <&eth3_pins>;
+	renesas,ethss-switch-portmanagement = <ETHSS_GMAC0_PORT>;
+};
+
+&pcie0 {
+	status = "disabled";
+};
+
+&ethsw {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&ethsw_pins>;
+
+	dsa,member = <0 0>;
+
+	mdio {
+		clock-frequency = <2500000>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		phy0: ethernet-phy@0 {
+			compatible = "ethernet-phy-id0007.0772";
+			phy-mode = "mii";
+			max-speed = <100>;
+			vsc8531,led-1-mode = <VSC8531_FORCE_LED_OFF>;
+			reg = <0>;
+		};
+
+		phy1: ethernet-phy@1 {
+			compatible = "ethernet-phy-id0007.0772";
+			phy-mode = "mii";
+			max-speed = <100>;
+			vsc8531,led-1-mode = <VSC8531_FORCE_LED_OFF>;
+			reg = <1>;
+		};
+	};
+};
+
+
+&switch_port0 {
+	label = "lan0";
+	phy-mode = "mii";
+	phy-handle = <&phy0>;
+	status = "okay";
+};
+
+&switch_port1 {
+	label = "lan1";
+	phy-mode = "mii";
+	phy-handle = <&phy1>;
+	status = "okay";
+};
+
+&switch_port3 {
+	status = "okay";
+};
+
+&mii_conv0 {
+	renesas,ethss-port = <ETHSS_SWITCH_PORT0>;
+	status = "okay";
+};
+
+&mii_conv1 {
+	renesas,ethss-port = <ETHSS_SWITCH_PORT1>;
+	status = "okay";
+};
+
+&mii_conv2 {
+	renesas,ethss-port = <ETHSS_GMAC2_PORT>;
+	status = "okay";
+};
+
+&mii_conv3 {
+	renesas,ethss-port = <ETHSS_GMAC1_PORT>;
+	status = "okay";
+};
+
+&ohci {
+	memory-region = <&global_cma>;
+	dr_mode = "otg";
+	status = "okay";
+};
+
+&ehci {
+	memory-region = <&global_cma>;
+	dr_mode = "otg";
+	status = "okay";
+};
+
+&hsusb {
+	dr_mode = "otg";
+	status = "okay";
+};
+
+&usb2_phy {
+	pinctrl-0 = <&usb_pins>;
+	pinctrl-names = "default";
+
+	status = "okay";
+};
+
+&du {
+	status = "disabled";
+};
+
+&rtc {
+	status = "okay";
+};
+
+&intc_ex {
+	pinctrl-0 = <&icu_pins>;
+	pinctrl-names = "default";
+
+	status = "okay";
+};
+
+&xspi0 {
+	pinctrl-0 = <&xspi0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	flash@0 {
+		compatible = "macronix,mx25uw51245g","jedec,spi-nor";
+		reg = <0>;
+		m25p,fast-read;
+		spi-max-frequency = <50000000>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <1>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@000000 {
+				label = "bl2-0";
+				reg = <0x00000000 0x0003C600>;
+				read-only;
+			};
+			partition@1FB000 {
+				label = "fip-0";
+				reg = <0x001FB000 0x000AB900>;
+				read-only;
+			};
+			partition@300000 {
+				label = "test-area-0";
+				reg = <0x00300000 0x01000000>;
+			};
+		};
+	};
+};
+
+&cmt0 {
+	status = "okay";
+};
+
+&cmt1 {
+	status = "okay";
+};
+
+&cmt2 {
+	status = "okay";
+};
+
+&cmtw0 {
+	status = "okay";
+};
+
+&cmtw1 {
+	status = "okay";
+};
+
+&canfd {
+	pinctrl-0 = <&can0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	channel0 {
+		status = "okay";
+	};
+};
+
+&adc0 {
+	pinctrl-0 = <&adc0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&adc1 {
+	pinctrl-0 = <&adc1_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&adc2 {
+	pinctrl-0 = <&adc2_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&xspi1 {
+	pinctrl-0 = <&xspi1_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	flash@0 {
+		compatible = "atmel,at25sf128a", "jedec,spi-nor";
+		reg = <0>;
+		m25p,fast-read;
+		spi-max-frequency = <50000000>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <1>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@000000 {
+				label = "test-area-1";
+				reg = <0x00000000 0x01000000>;
+			};
+		};
+	};
+};
+
+&sci1 {
+	pinctrl-0 = <&sci1_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
