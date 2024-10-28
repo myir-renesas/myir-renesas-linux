@@ -12,6 +12,12 @@
 #include <dt-bindings/net/rzt2h-ethss.h>
 #include <dt-bindings/net/mscc-phy-vsc8531.h>
 
+/*
+ * Set SEL_ETH_CONFIG to below values to select using of:
+ * - 1: ETH
+ * - 0: CON
+ */
+#define		SEL_ETH_CONFIG		1
 
 / {
 	model = "Renesas Development EVK based on r9a09g077m44";
@@ -80,6 +86,12 @@
 		regulator-always-on;
 	};
 
+	clk_ext_eth: clk_ext_eth {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+	};
+
     leds {
 		compatible = "gpio-leds";
 		led0 {
@@ -94,7 +106,30 @@
 				default-state = "on";
 				linux,default-trigger = "heartbeat";
 		};
+
+#if (SEL_ETH_CONFIG)
+		gpio1 {
+				gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
+				label = "switch_eth1";
+				default-state = "off";
+				linux,default-trigger = "none";
+		};
+
+		gpio2 {
+				gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+				label = "switch_eth1";
+				default-state = "off";
+				linux,default-trigger = "none";
+		};
+
+		gpio3 {
+				gpios = <&pinctrl RZT2H_GPIO(34, 7) GPIO_ACTIVE_HIGH>;
+				label = "switch_eth1";
+				default-state = "off";
+				linux,default-trigger = "none";
+		};
     };
+#endif
 
 };
 
@@ -191,7 +226,6 @@
 			 <RZT2H_PORT_PINMUX(21, 1, 0x0F)>,      /* ETH0_RXD[2] */
 			 <RZT2H_PORT_PINMUX(21, 2, 0x0F)>,      /* ETH0_RXD[3] */
 			 <RZT2H_PORT_PINMUX(21, 3, 0x0F)>,      /* ETH0_RXDV */
-			 <RZT2H_PORT_PINMUX(22, 1, 0x0F)>,      /* ETH0_TXER */
 			 <RZT2H_PORT_PINMUX(22, 2, 0x0F)>,      /* ETH0_RXER */
 			 <RZT2H_PORT_PINMUX(22, 3, 0x0F)>,      /* ETH0_CRS */
 			 <RZT2H_PORT_PINMUX(22, 4, 0x0F)>;      /* ETH0_COL */
@@ -213,7 +247,6 @@
 			 <RZT2H_PORT_PINMUX(25, 6, 0x0F)>,      /* ETH1_RXD[2] */
 			 <RZT2H_PORT_PINMUX(25, 7, 0x0F)>,      /* ETH1_RXD[3] */
 			 <RZT2H_PORT_PINMUX(26, 0, 0x0F)>,      /* ETH1_RXDV */
-			 <RZT2H_PORT_PINMUX(26, 6, 0x0F)>,      /* ETH1_TXER */
 			 <RZT2H_PORT_PINMUX(26, 7, 0x0F)>,      /* ETH1_RXER */
 			 <RZT2H_PORT_PINMUX(27, 0, 0x0F)>,      /* ETH1_CRS */
 			 <RZT2H_PORT_PINMUX(27, 1, 0x0F)>;      /* ETH1_COL */
@@ -235,7 +268,6 @@
 			 <RZT2H_PORT_PINMUX(30, 2, 0x0F)>,      /* ETH2_RXD[2] */
 			 <RZT2H_PORT_PINMUX(30, 3, 0x0F)>,      /* ETH2_RXD[3] */
 			 <RZT2H_PORT_PINMUX(30, 4, 0x0F)>,      /* ETH2_RXDV */
-			 <RZT2H_PORT_PINMUX(31, 2, 0x0F)>,      /* ETH2_TXER */
 			 <RZT2H_PORT_PINMUX(31, 3, 0x0F)>,      /* ETH2_RXER */
 			 <RZT2H_PORT_PINMUX(31, 4, 0x0F)>,      /* ETH2_CRS */
 			 <RZT2H_PORT_PINMUX(31, 5, 0x0F)>;      /* ETH2_COL */
@@ -257,7 +289,6 @@
 			 <RZT2H_PORT_PINMUX(34, 3, 0x0F)>,	/* ETH3_RXD[2] */
 			 <RZT2H_PORT_PINMUX(34, 4, 0x0F)>,	/* ETH3_RXD[3] */
 			 <RZT2H_PORT_PINMUX(34, 5, 0x0F)>,	/* ETH3_RXDV */
-			 <RZT2H_PORT_PINMUX(34, 7, 0x0F)>,	/* ETH3_TXER */
 			 <RZT2H_PORT_PINMUX(35, 0, 0x0F)>,	/* ETH3_RXER */
 			 <RZT2H_PORT_PINMUX(35, 1, 0x0F)>,	/* ETH3_CRS */
 			 <RZT2H_PORT_PINMUX(35, 2, 0x0F)>;	/* ETH3_COL */
@@ -265,7 +296,6 @@
 			slew-rate       = <1>;
 			drive-strength  = <3>;
 	};
-
 
 #if (SEL_OTG)
 	usb_exicen_a {
@@ -525,53 +555,59 @@
 
 &gmac0 {
 	status = "okay";
-	phy-mode = "gmii";
+	// phy-mode = "gmii";
+	phy-mode = "mii";
 	ethss-handle = <&ethss>;
 
 	fixed-link {
-		speed = <1000>;
+		speed = <100>;
 		full-duplex;
 	};
 };
 
 &gmac1 {
 	phy-handle = <&phy3>;
-	phy-mode = "rgmii-id";
+	phy-mode = "mii";
 	pcs-handle = <&mii_conv3>;
 	status = "okay";
-	phy-reset-gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(26, 4) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio1_pins>;
 
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		phy3: ethernet-phy@3 {
-			compatible = "ethernet-phy-id0007.0772";
-			phy-mode = "rgmii-id";
-			vsc8531,led-1-mode = <VSC8531_FORCE_LED_ON>;
-			reg = <3>;
+		phy3: ethernet-phy@7 {
+			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
+			phy-mode = "mii";
+			reg = <7>;
+			micrel,led-mode = <04>;
+			clocks = <&clk_ext_eth>;
+			clock-names = "rmii-ref";
 		};
 	};
 };
 
 &gmac2 {
 	phy-handle = <&phy2>;
-	phy-mode = "rgmii-id";
+	phy-mode = "mii";
 	pcs-handle = <&mii_conv2>;
 	status = "okay";
-	phy-reset-gpios = <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_HIGH>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(31, 0) GPIO_ACTIVE_HIGH>;
+	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio2_pins>;
 
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		phy2: ethernet-phy@2 {
-			compatible = "ethernet-phy-id0007.0772";
-			phy-mode = "rgmii-id";
-			vsc8531,led-1-mode = <VSC8531_FORCE_LED_ON>;
-			reg = <2>;
+		phy2: ethernet-phy@3 {
+			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
+			phy-mode = "mii";
+			// micrel,led-mode = <1>;
+			clocks = <&clk_ext_eth>;
+			clock-names = "rmii-ref";
+			reg = <3>;
 		};
 	};
 };
@@ -584,14 +620,15 @@
 };
 
 &pcie0 {
-	status = "disabled";
+	status = "okay";
 };
 
+#if 0
 &ethsw {
 	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
-	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&ethsw_pins>;
 
@@ -603,24 +640,21 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		phy0: ethernet-phy@0 {
-			compatible = "ethernet-phy-id0007.0772";
+		phy0: ethernet-phy@1 {
+			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-1-mode = <VSC8531_FORCE_LED_OFF>;
-			reg = <0>;
+			reg = <1>;
 		};
 
-		phy1: ethernet-phy@1 {
-			compatible = "ethernet-phy-id0007.0772";
+		phy1: ethernet-phy@2 {
+			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-1-mode = <VSC8531_FORCE_LED_OFF>;
-			reg = <1>;
+			reg = <2>;
 		};
 	};
 };
-
 
 &switch_port0 {
 	label = "lan0";
@@ -639,6 +673,7 @@
 &switch_port3 {
 	status = "okay";
 };
+#endif
 
 &mii_conv0 {
 	renesas,ethss-port = <ETHSS_SWITCH_PORT0>;

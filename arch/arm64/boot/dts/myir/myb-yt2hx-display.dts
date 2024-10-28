@@ -12,7 +12,7 @@
  * - 0: CON
  *  When the display is turned on, SCI4, SCI1, TF cannot be used because of the PIN reuse function.
  */
-#define		SEL_DISPLAY_RGB                         1
+#define		SEL_DISPLAY_RGB                         0
 
 
 
@@ -51,7 +51,7 @@
 			reg = <0x0 0xD0000000 0x0 0x10000000>;
 		};
 	};
-
+#if (SEL_DISPLAY_RGB)
 	panel@0 {
 			compatible = "myirtft_panel_7inch";
 			power-supply = <&reg_3p3v>;
@@ -65,6 +65,7 @@
 					};
 			};
 	};
+#endif
 
 #if (!SEL_DISPLAY_RGB)
     switch_display: regulator-switch_display {
