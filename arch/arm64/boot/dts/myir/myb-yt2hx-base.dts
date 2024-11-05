@@ -160,8 +160,8 @@
 	};
 
 	i2c2_pins: i2c2 {
-        		pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x17)>, /* SDA */
-             			<RZT2H_PORT_PINMUX(7, 1, 0x17)>; /* SCL */
+			pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x17)>, /* SDA */
+					<RZT2H_PORT_PINMUX(6, 7, 0x17)>; /* SCL */
 	};
 
 	mdio1_pins: gmac_mdio1 {
