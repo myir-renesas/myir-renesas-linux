@@ -82,6 +82,7 @@
 };
 
 &du {
+#if (SEL_DISPLAY_RGB)
 	pinctrl-0 = <&du_pins>;
 	pinctrl-names = "default";
 	status = "okay";
@@ -93,6 +94,9 @@
 				};
 		};
     };
+#else
+    status = "disabled";
+#endif
 };
 
 &i2c2 {
