@@ -621,10 +621,11 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 
 	drm_panel_init(&panel->base, dev, &panel_simple_funcs, connector_type);
 
+#if 0
 	err = drm_panel_of_backlight(&panel->base);
 	if (err)
 		goto free_ddc;
-
+#endif
 	drm_panel_add(&panel->base);
 
 	dev_set_drvdata(dev, panel);
@@ -3902,6 +3903,32 @@ static const struct panel_desc arm_rtsm = {
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
+/* myir tft 7-inch */
+static const struct display_timing myir_tft_7inch_mode = {
+       .pixelclock = {33000000,33000000,33000000},
+       .hactive = {800,800,800},
+       .hfront_porch = {210,210,210},
+       .hback_porch = {46,46,46},
+       .hsync_len = {1,1,1},
+       .vactive = {480,480,480},
+       .vfront_porch = {23,23,23},
+       .vback_porch = {22,22,22},
+       .vsync_len = {20,20,20},
+};
+
+static const struct panel_desc myir_tft_7inch = {
+	.timings = &myir_tft_7inch_mode,
+	.num_timings = 1,
+	.bpc = 6,
+	.size = {
+		.width = 154,
+		.height = 86,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_SAMPLE_NEGEDGE,
+	.connector_type = DRM_MODE_CONNECTOR_DPI,
+};
+
 static const struct of_device_id platform_of_match[] = {
 	{
 		.compatible = "ampire,am-1280800n3tzqw-t00h",
@@ -4302,6 +4329,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "winstar,wf35ltiacd",
 		.data = &winstar_wf35ltiacd,
+        }, {
+                .compatible = "myirtft_panel_7inch",
+                .data = &myir_tft_7inch,
 	}, {
 		/* Must be the last entry */
 		.compatible = "panel-dpi",
