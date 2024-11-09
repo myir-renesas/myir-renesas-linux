@@ -13,11 +13,11 @@
 #include <dt-bindings/net/mscc-phy-vsc8531.h>
 
 /*
- * Set SEL_ETH_CONFIG to below values to select using of:
+ * Set SEL_ETHSW to below values to select using of:
  * - 1: ETH
- * - 0: CON
+ * - 0: DNP
  */
-#define		SEL_ETH_CONFIG		1
+#define     SEL_ETHSW           1
 
 / {
 	model = "Renesas Development EVK based on r9a09g077m44";
@@ -92,44 +92,6 @@
 		clock-frequency = <25000000>;
 	};
 
-    leds {
-		compatible = "gpio-leds";
-		led0 {
-				gpios = <&pinctrl RZT2H_GPIO(21, 6) GPIO_ACTIVE_LOW>;
-				label = "Blue";
-				default-state = "on";
-				linux,default-trigger = "heartbeat";
-		};
-		led1 {
-				gpios = <&pinctrl RZT2H_GPIO(26, 3) GPIO_ACTIVE_LOW>;
-				label = "Green";
-				default-state = "on";
-				linux,default-trigger = "heartbeat";
-		};
-
-#if (SEL_ETH_CONFIG)
-		gpio1 {
-				gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
-				label = "switch_eth1";
-				default-state = "off";
-				linux,default-trigger = "none";
-		};
-
-		gpio2 {
-				gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
-				label = "switch_eth1";
-				default-state = "off";
-				linux,default-trigger = "none";
-		};
-
-		gpio3 {
-				gpios = <&pinctrl RZT2H_GPIO(34, 7) GPIO_ACTIVE_HIGH>;
-				label = "switch_eth1";
-				default-state = "off";
-				linux,default-trigger = "none";
-		};
-    };
-#endif
 
 };
 
@@ -203,7 +165,10 @@
 
 	ethsw_pins: ethsw_pins {
 		pinmux = <RZT2H_PORT_PINMUX(21, 4, 0x11)>,      /* ETHSW_MDC */
-			 <RZT2H_PORT_PINMUX(21, 5, 0x11)>;      /* ETHSW_MDIO */
+			 <RZT2H_PORT_PINMUX(21, 5, 0x11)>,      /* ETHSW_MDIO */
+			 <RZT2H_PORT_PINMUX(21, 6, 0x11)>,      /* ETHSW_PHYLINK0 */
+			 <RZT2H_PORT_PINMUX(26, 3, 0x11)>,      /* ETHSW_PHYLINK1 */
+			 <RZT2H_PORT_PINMUX(30, 7, 0x11)>;      /* ETHSW_PHYLINK2 */
 	};
 
 	pins_refclk: pins_refclk {
@@ -577,10 +542,12 @@
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
+		clock-frequency = <2500000>;
 		phy3: ethernet-phy@7 {
 			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
 			phy-mode = "mii";
 			reg = <7>;
+			max-speed = <100>;
 			micrel,led-mode = <04>;
 			clocks = <&clk_ext_eth>;
 			clock-names = "rmii-ref";
@@ -601,12 +568,14 @@
 	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
+		clock-frequency = <2500000>;
 		phy2: ethernet-phy@3 {
 			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
 			phy-mode = "mii";
-			// micrel,led-mode = <1>;
+			micrel,led-mode = <4>;
 			clocks = <&clk_ext_eth>;
 			clock-names = "rmii-ref";
+			max-speed = <100>;
 			reg = <3>;
 		};
 	};
@@ -623,12 +592,13 @@
 	status = "okay";
 };
 
-#if 0
+#if (SEL_ETHSW)
 &ethsw {
 	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
-	phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
+	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(22, 6) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&ethsw_pins>;
 
@@ -643,6 +613,9 @@
 		phy0: ethernet-phy@1 {
 			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
 			phy-mode = "mii";
+			micrel,led-mode = <0>;
+			clocks = <&clk_ext_eth>;
+			clock-names = "rmii-ref";
 			max-speed = <100>;
 			reg = <1>;
 		};
@@ -650,6 +623,9 @@
 		phy1: ethernet-phy@2 {
 			compatible = "ethernet-phy-id0007.c0f1","ethernet-phy-ieee802.3-c22";
 			phy-mode = "mii";
+			micrel,led-mode = <0>;
+			clocks = <&clk_ext_eth>;
+			clock-names = "rmii-ref";
 			max-speed = <100>;
 			reg = <2>;
 		};
@@ -728,10 +704,10 @@
 };
 
 &intc_ex {
-	pinctrl-0 = <&icu_pins>;
-	pinctrl-names = "default";
+	// pinctrl-0 = <&icu_pins>;
+	// pinctrl-names = "default";
 
-	status = "okay";
+	status = "disabled";
 };
 
 &xspi0 {

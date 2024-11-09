@@ -14,9 +14,12 @@
  */
 #define		SEL_DISPLAY_RGB                         0
 
-
-
-
+/*
+ * Set SEL_ETH_CON to below values to select using of:
+ * - 1: ETH
+ * - 0: CON
+ */
+#define		SEL_ETH_CON			1
 
 #include "myb-yt2hx-base.dts"
 
@@ -38,7 +41,6 @@
 		ethernet1 = &gmac2;
 	};
 
-
 	reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -51,6 +53,7 @@
 			reg = <0x0 0xD0000000 0x0 0x10000000>;
 		};
 	};
+
 #if (SEL_DISPLAY_RGB)
 	panel@0 {
 			compatible = "myirtft_panel_7inch";
@@ -67,18 +70,48 @@
 	};
 #endif
 
-#if (!SEL_DISPLAY_RGB)
-    switch_display: regulator-switch_display {
-            compatible = "regulator-fixed";
-            regulator-name = "switch_display";
-            regulator-min-microvolt = <3300000>;
-            regulator-max-microvolt = <3300000>;
-            gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
-            enable-active-high;
-            regulator-boot-on;
-            regulator-always-on;
+    leds {
+		compatible = "gpio-leds";
+		// led0 {
+		// 		gpios = <&pinctrl RZT2H_GPIO(21, 6) GPIO_ACTIVE_LOW>;
+		// 		label = "Blue";
+		// 		default-state = "on";
+		// 		linux,default-trigger = "heartbeat";
+		// };
+		// led1 {
+		// 		gpios = <&pinctrl RZT2H_GPIO(26, 3) GPIO_ACTIVE_LOW>;
+		// 		label = "Green";
+		// 		default-state = "on";
+		// 		linux,default-trigger = "heartbeat";
+		// };
+
+		led2 {
+				gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
+				label = "display_con";
+			#if (SEL_DISPLAY_RGB)
+				default-state = "off";
+			#else
+				default-state = "on";
+			#endif
+		};
+
+		led3 {
+				gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+				label = "eth_con";
+			#if (SEL_ETH_CON)
+				default-state = "off";
+			#else
+				default-state = "on";
+			#endif
+		};
+
+		led4 {
+				gpios = <&pinctrl RZT2H_GPIO(34, 7) GPIO_ACTIVE_HIGH>;
+				label = "eth0";
+				default-state = "off";
+		};
+
     };
-#endif
 
 };
 
