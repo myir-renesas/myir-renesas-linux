@@ -31,7 +31,7 @@
  * SEL_OTG = 1 use OTG with CN33
  * SEL_OTG = 0 use USB host with CN80 and USB function with CN79 (default)
  */
-#define SEL_OTG			0
+#define SEL_OTG			1
 
 /******* USB2.0 Host registers (original offset is +0x200) *******/
 #define USB2_INT_ENABLE		0x000
