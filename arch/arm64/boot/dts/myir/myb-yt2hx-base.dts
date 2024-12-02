@@ -568,7 +568,7 @@
 	pcs-handle = <&mii_conv2>;
 	status = "okay";
 	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(31, 0) GPIO_ACTIVE_HIGH>;
-	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio2_pins>;
 
@@ -604,8 +604,6 @@
 	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
-	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
-	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(11, 0) GPIO_ACTIVE_HIGH>;
 	phy-reset-gpios = <&pinctrl RZT2H_GPIO(22, 6) GPIO_ACTIVE_HIGH>;
 	// phy-reset-gpios = <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
