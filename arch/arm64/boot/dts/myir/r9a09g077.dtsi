@@ -240,8 +240,8 @@
 		};
 
 		sci4: serial@80006000 {
-			compatible = "renesas,r9a09g077-sci",
-				     "renesas,rz-rsci";
+			compatible = "renesas,r9a09g077-rz-rscif",
+				     "renesas,rz-rscif";
 			reg = <0 0x80006000 0 0x400>;
 			interrupts = <GIC_SPI 606 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 607 IRQ_TYPE_EDGE_RISING>,
