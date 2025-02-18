@@ -134,7 +134,6 @@
 };
 
 &i2c2 {
-	clock-frequency = <400000>;
 	status = "okay";
 
 	ft5x06: ft5x06@38 {
