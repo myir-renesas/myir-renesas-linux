@@ -275,6 +275,12 @@ config TERANETICS_PHY
 	help
 	  Currently supports the Teranetics TN2020
 
+config MOTORCOMM_PHY
+        tristate "Motorcomm PHYs"
+        help
+          Enables support for Motorcomm network PHYs.
+          Currently supports the YT8511, YT8521, YT8531, RK631 gigabit PHY.
+
 config DP83822_PHY
 	tristate "Texas Instruments DP83822/825/826 PHYs"
 	help
