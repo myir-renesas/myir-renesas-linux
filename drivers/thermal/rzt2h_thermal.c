@@ -119,7 +119,7 @@ static int rzt2h_thermal_get_temp(void *devdata, int *temp)
 	result = readl(priv->base + TSU_SCRR) & CTEMP_MASK;
 
 	/* Compensation formula */
-	val = (TSU_E + TSU_D) * (result - priv->otp_tscode_templo);
+	val = (TSU_E + TSU_D) * ((s64)result - (s64)priv->otp_tscode_templo);
 
 	val1 = (priv->otp_tscode_temphi - priv->otp_tscode_templo);
 
