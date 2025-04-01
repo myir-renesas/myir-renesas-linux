@@ -359,14 +359,14 @@
 #else
 	du_pins: du {
 		du_data {
-			pinmux = <RZT2H_PORT_PINMUX(17, 0, 0x28)>, /* LCDC_DATR0 */
-				 <RZT2H_PORT_PINMUX(18, 0, 0x28)>, /* LCDC_DATR1 */
-				 <RZT2H_PORT_PINMUX(18, 1, 0x28)>, /* LCDC_DATR2 */
-				 <RZT2H_PORT_PINMUX(18, 2, 0x28)>, /* LCDC_DATR3 */
-				 <RZT2H_PORT_PINMUX(18, 3, 0x28)>, /* LCDC_DATR4 */
-				 <RZT2H_PORT_PINMUX(18, 4, 0x28)>, /* LCDC_DATR5 */
-				 <RZT2H_PORT_PINMUX(18, 5, 0x28)>, /* LCDC_DATR6 */
-				 <RZT2H_PORT_PINMUX(18, 6, 0x28)>, /* LCDC_DATR7 */
+			pinmux = <RZT2H_PORT_PINMUX(17, 7, 0x28)>, /* LCDC_DATB0 */
+				 <RZT2H_PORT_PINMUX(18, 0, 0x28)>, /* LCDC_DATB1 */
+				 <RZT2H_PORT_PINMUX(18, 1, 0x28)>, /* LCDC_DATB2 */
+				 <RZT2H_PORT_PINMUX(18, 2, 0x28)>, /* LCDC_DATB3 */
+				 <RZT2H_PORT_PINMUX(18, 3, 0x28)>, /* LCDC_DATB4 */
+				 <RZT2H_PORT_PINMUX(18, 4, 0x28)>, /* LCDC_DATB5 */
+				 <RZT2H_PORT_PINMUX(18, 5, 0x28)>, /* LCDC_DATB6 */
+				 <RZT2H_PORT_PINMUX(18, 6, 0x28)>, /* LCDC_DATB7 */
 
 				 <RZT2H_PORT_PINMUX(11, 0, 0x28)>, /* LCDC_DATG0 */
 				 <RZT2H_PORT_PINMUX(14, 1, 0x28)>, /* LCDC_DATG1 */
@@ -377,14 +377,14 @@
 				 <RZT2H_PORT_PINMUX(14, 6, 0x28)>, /* LCDC_DATG6 */
 				 <RZT2H_PORT_PINMUX(17, 6, 0x28)>, /* LCDC_DATG7 */
 
-				 <RZT2H_PORT_PINMUX(10, 0, 0x28)>, /* LCDC_DATB0 */
-				 <RZT2H_PORT_PINMUX(10, 1, 0x28)>, /* LCDC_DATB1 */
-				 <RZT2H_PORT_PINMUX(10, 2, 0x28)>, /* LCDC_DATB2 */
-				 <RZT2H_PORT_PINMUX(10, 3, 0x28)>, /* LCDC_DATB3 */
-				 <RZT2H_PORT_PINMUX(10, 4, 0x28)>, /* LCDC_DATB4 */
-				 <RZT2H_PORT_PINMUX(10, 5, 0x28)>, /* LCDC_DATB5 */
-				 <RZT2H_PORT_PINMUX(10, 6, 0x28)>, /* LCDC_DATB6 */
-				 <RZT2H_PORT_PINMUX(10, 7, 0x28)>; /* LCDC_DATB7 */
+				 <RZT2H_PORT_PINMUX(10, 0, 0x28)>, /* LCDC_DATR0 */
+				 <RZT2H_PORT_PINMUX(10, 1, 0x28)>, /* LCDC_DATR1 */
+				 <RZT2H_PORT_PINMUX(10, 2, 0x28)>, /* LCDC_DATR2 */
+				 <RZT2H_PORT_PINMUX(10, 3, 0x28)>, /* LCDC_DATR3 */
+				 <RZT2H_PORT_PINMUX(10, 4, 0x28)>, /* LCDC_DATR4 */
+				 <RZT2H_PORT_PINMUX(10, 5, 0x28)>, /* LCDC_DATR5 */
+				 <RZT2H_PORT_PINMUX(10, 6, 0x28)>, /* LCDC_DATR6 */
+				 <RZT2H_PORT_PINMUX(10, 7, 0x28)>; /* LCDC_DATR7 */
 			drive-strength = <3>;
 		};
 
@@ -462,9 +462,6 @@
 
 /*TF*/
 &sdhi1 {
-#if (SEL_DISPLAY_RGB)
-	status = "disabled";
-#else
 	pinctrl-0 = <&sdhi1_pins>;
 	pinctrl-names = "default";
 	vmmc-supply = <&reg_3p3v>;
@@ -473,7 +470,6 @@
 	// sd-uhs-sdr50;
 	// sd-uhs-sdr104;
 	status = "okay";
-#endif
 };
 
 &spi0 {
