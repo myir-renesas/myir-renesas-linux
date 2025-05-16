@@ -1242,8 +1242,6 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 
 	i2c_set_clientdata(client, tsdata);
 
-
-	client->irq=19;
 	error = request_irq(client->irq, edt_ft5x06_ts_isr, 0, client->name, tsdata);
 	if (error) {
 		dev_err(&client->dev, "Unable to request touchscreen IRQ.\n");

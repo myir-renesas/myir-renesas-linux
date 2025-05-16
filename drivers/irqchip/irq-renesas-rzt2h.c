@@ -288,22 +288,17 @@ static int irqc_probe(struct platform_device *pdev)
 	writel(NS_PORTNF_MD_INIT, priv->base + NS_PORTNF_MD);
 	writel(S_PORTNF_MD_INIT, priv->base1 + S_PORTNF_MD);
 
+#if 0
 	/* request interrupts one by one */
 	for (k = 0; k < priv->number_of_irqs; k++) {
-
-		// This irq is for touch use, registered in other drivers.
-		if(k==6) {
-			continue;
-		}
-
 		if (request_irq(priv->irq[k].requested_irq, irqc_irq_handler,
-				// 0, name, &priv->irq[k])) {
 					0, name, &priv->irq[k])) {
 		dev_err(&pdev->dev, "failed to request IRQ\n");
 			ret = -ENOENT;
 			goto err2;
 		}
 	}
+#endif
 
 	dev_info(&pdev->dev, "driving %d irqs\n", priv->number_of_irqs);
 
