@@ -153,9 +153,16 @@
 				default-state = "on";
 			#endif
 		};
-
+		
+		#if (!SEL_ETH3_CON)
+		eth3refclk_rs485_sw {
+			label = "eth3refclk_rs485_sw";
+			gpios = <&pinctrl RZT2H_GPIO(34, 6) GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "default-on";
+			default-state = "on";
+		};
+		#endif
     };
-
 };
 
 &du {
