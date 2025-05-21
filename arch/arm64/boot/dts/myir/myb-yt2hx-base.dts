@@ -841,6 +841,7 @@
 	status = "okay";
 };
 
+/* SPI Flash */
 &xspi1 {
 	pinctrl-0 = <&xspi1_pins>;
 	pinctrl-names = "default";
@@ -860,7 +861,7 @@
 			#size-cells = <1>;
 
 			partition@000000 {
-				label = "test-area-1";
+				label = "spiflash";
 				reg = <0x00000000 0x01000000>;
 			};
 		};
