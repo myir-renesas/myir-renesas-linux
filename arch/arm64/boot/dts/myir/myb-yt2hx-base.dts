@@ -330,7 +330,7 @@
 		};
 
 		xspi0_rst {
-			pinmux = <RZT2H_PORT_PINMUX(6, 6, 0x1C)>; /* XSPI0_RESET0 */
+			pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x1C)>; /* XSPI0_RESET0 */
 		};
 
 		xspi0_ds {
@@ -356,7 +356,8 @@
 	};
 
 	icu_pins: icu_pins {
-		pinmux = <RZT2H_PORT_PINMUX(0, 4, 0x0)>; /* IRQ3 */
+		pinmux = <RZT2H_PORT_PINMUX(17, 3, 0x0)>,	/* IRQ15 */
+			 <RZT2H_PORT_PINMUX(0, 4, 0x0)>;	/* IRQ3  */
 	};
 
 	can0_pins: can0 {
@@ -452,6 +453,16 @@
 	pinctrl-0 = <&sci0_pins>;
 	pinctrl-names = "default";
 	status = "okay";
+};
+
+&sci1 {
+#if (SEL_DISPLAY_RGB)
+	status = "disabled";
+#else
+	// pinctrl-0 = <&sci1_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+#endif
 };
 
 /* RS485 */
@@ -750,10 +761,9 @@
 };
 
 &intc_ex {
-	// pinctrl-0 = <&icu_pins>;
-	// pinctrl-names = "default";
-
-	status = "disabled";
+	pinctrl-0 = <&icu_pins>;
+	pinctrl-names = "default";
+	status = "okay";
 };
 
 &xspi0 {
@@ -865,14 +875,4 @@
 			};
 		};
 	};
-};
-
-&sci1 {
-#if (SEL_DISPLAY_RGB)
-	status = "disabled";
-#else
-	pinctrl-0 = <&sci1_pins>;
-	pinctrl-names = "default";
-	status = "okay";
-#endif
 };
