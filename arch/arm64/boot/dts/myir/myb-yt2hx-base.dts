@@ -109,11 +109,13 @@
 			 <RZT2H_PORT_PINMUX(27, 4, 0x14)>; /* SCI0_RXD */
 	};
 
+/* RS485 */
 	sci3_pins: sci3 {
 		pinmux = <RZT2H_PORT_PINMUX(13, 5, 0x14)>, /* SCI3_TXD */
 			 <RZT2H_PORT_PINMUX(13, 4, 0x14)>; /* SCI3_RXD */
 	};
 
+/* RS232 */
 #if (!SEL_DISPLAY_RGB)
 	sci4_pins: sci4 {
 		pinmux = <RZT2H_PORT_PINMUX(14, 3, 0x14)>, /* SCI4_TXD */
@@ -153,6 +155,11 @@
 				 <RZT2H_PORT_PINMUX(16, 6, 0x29)>, /* SD1_CMD */
 				 <RZT2H_PORT_PINMUX(17, 4, 0x29)>; /* SD1_CD  */
 		};
+	};
+
+	i2c0_pins: i2c0 {
+		pinmux = <RZT2H_PORT_PINMUX(0, 7, 0x17)>, /* SDA */
+				<RZT2H_PORT_PINMUX(0, 6, 0x17)>; /* SCL */
 	};
 
 	i2c2_pins: i2c2 {
@@ -420,13 +427,14 @@
 	clock-frequency = <1000000>;
 };
 
+/* Serial Console */
 &sci0 {
 	pinctrl-0 = <&sci0_pins>;
 	pinctrl-names = "default";
 	status = "okay";
 };
 
-/*RS485*/
+/* RS485 */
 &sci3 {
 	pinctrl-0 = <&sci3_pins>;
 	pinctrl-names = "default";
@@ -438,7 +446,7 @@
 	status = "okay";
 };
 
-/*RS232*/
+/* RS232 */
 &sci4 {
 #if (SEL_DISPLAY_RGB)
 	status = "disabled";
@@ -449,7 +457,7 @@
 #endif
 };
 
-/*eMMC*/
+/* eMMC */
 &sdhi0 {
 	vmmc-supply = <&reg_3p3v>;
 	vqmmc-supply = <&reg_1p8v>;
@@ -460,7 +468,7 @@
 	status = "okay";
 };
 
-/*TF*/
+/* TF Card */
 &sdhi1 {
 	pinctrl-0 = <&sdhi1_pins>;
 	pinctrl-names = "default";
@@ -477,7 +485,23 @@
 };
 
 &i2c0 {
-	status = "disabled";
+	pinctrl-0 = <&i2c0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	/* rtc */
+	lkrtc: hym8563@51 {
+		compatible = "haoyu,hym8563";
+		reg = <0x51>;
+		#clock-cells = <0>;
+	};
+
+	/* 32Kbit(4KB) */
+	eeprom: 24c32f@50 {
+		compatible = "atmel,24c32";
+		reg = <0x50>;
+		pagesize = <32>;
+	};
 };
 
 &i2c1 {
@@ -485,21 +509,7 @@
 };
 
 &i2c2 {
-	pinctrl-0 = <&i2c2_pins>;
-	pinctrl-names = "default";
-	status = "okay";
-
-	E2PROM:24C256C@50 {
-			compatible = "atmel,24c256";
-			reg = <0x50>;
-			pagesize = <64>;
-	};
-
-	lkrtc: hym8563@51 {
-			compatible = "haoyu,hym8563";
-			reg = <0x51>;
-			#clock-cells = <0>;
-	};
+	status = "disabled";
 };
 
 &wdt2 {
