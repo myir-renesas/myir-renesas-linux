@@ -87,18 +87,21 @@
 
     leds {
 		compatible = "gpio-leds";
-		// led0 {
-		// 		gpios = <&pinctrl RZT2H_GPIO(21, 6) GPIO_ACTIVE_LOW>;
-		// 		label = "Blue";
-		// 		default-state = "on";
-		// 		linux,default-trigger = "heartbeat";
-		// };
-		// led1 {
-		// 		gpios = <&pinctrl RZT2H_GPIO(26, 3) GPIO_ACTIVE_LOW>;
-		// 		label = "Green";
-		// 		default-state = "on";
-		// 		linux,default-trigger = "heartbeat";
-		// };
+		status = "okay";
+
+		led0 {
+			label = "user_led";
+			gpios = <&pinctrl RZT2H_GPIO(22, 5) GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "default-on";
+			default-status = "on";
+		};
+
+		led1 {
+			label = "system_led";
+			gpios = <&pinctrl RZT2H_GPIO(32, 5) GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+			default-status = "on";
+		};
 
 		/* 
 		 	S=L, nA=nB1, --> LCD
