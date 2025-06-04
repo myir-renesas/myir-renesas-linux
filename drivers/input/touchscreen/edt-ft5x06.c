@@ -30,7 +30,7 @@
 #include <linux/uaccess.h>
 
 #include <asm/unaligned.h>
-#include <linux/workqueue.h>            // Required for workqueues
+#include <linux/workqueue.h>
 
 #define WORK_REGISTER_THRESHOLD		0x00
 #define WORK_REGISTER_REPORT_RATE	0x08
@@ -106,6 +106,8 @@ struct edt_ft5x06_ts_data {
 	struct gpio_desc *reset_gpio;
 	struct gpio_desc *wake_gpio;
 
+	struct delayed_work work;
+
 #if defined(CONFIG_DEBUG_FS)
 	struct dentry *debug_dir;
 	u8 *raw_buffer;
@@ -131,14 +133,6 @@ struct edt_ft5x06_ts_data {
 
 struct edt_i2c_chip_data {
 	int  max_support_points;
-};
-
-static struct workqueue_struct *edt_wq;
-
-struct work_data {
-	struct work_struct workqueue;
-	struct edt_ft5x06_ts_data *tsdata;
-	struct device *dev;
 };
 
 void workqueue_fn(struct work_struct *work);
@@ -201,10 +195,10 @@ void workqueue_fn(struct work_struct *work)
 	int i, type, x, y, id;
 	int offset, tplen, datalen, crclen;
 	int error;
-	struct work_data *data = container_of(work, struct work_data, workqueue);
 
-	struct edt_ft5x06_ts_data *tsdata = data->tsdata;
-	struct device *dev = &data->tsdata->client->dev;
+	struct edt_ft5x06_ts_data *tsdata =
+		container_of(work, struct edt_ft5x06_ts_data, work.work);
+	struct device *dev = &tsdata->client->dev;
 
 	switch (tsdata->version) {
 	case EDT_M06:
@@ -298,93 +292,7 @@ static irqreturn_t edt_ft5x06_ts_isr(int irq, void *dev_id)
 	int offset, tplen, datalen, crclen;
 	int error;
 
-	struct work_data *data = kmalloc(sizeof(struct work_data), GFP_ATOMIC);
-    data->tsdata = (struct edt_ft5x06_ts_data *)dev_id;
-    data->dev = (struct device *)dev_id;
-
-    INIT_WORK(&data->workqueue, workqueue_fn);
-    queue_work(edt_wq, &data->workqueue);
-	goto out;
-
-	switch (tsdata->version) {
-	case EDT_M06:
-		cmd = 0xf9; /* tell the controller to send touch data */
-		offset = 5; /* where the actual touch data starts */
-		tplen = 4;  /* data comes in so called frames */
-		crclen = 1; /* length of the crc data */
-		break;
-
-	case EDT_M09:
-	case EDT_M12:
-	case EV_FT:
-	case GENERIC_FT:
-		cmd = 0x0;
-		offset = 3;
-		tplen = 6;
-		crclen = 0;
-		break;
-
-	default:
-		goto out;
-	}
-
-	memset(rdbuf, 0, sizeof(rdbuf));
-	datalen = tplen * tsdata->max_support_points + offset + crclen;
-
-	error = edt_ft5x06_ts_readwrite(tsdata->client,
-					sizeof(cmd), &cmd,
-					datalen, rdbuf);
-	if (error) {
-		dev_err_ratelimited(dev, "Unable to fetch data, error: %d\n",
-				    error);
-		goto out;
-	}
-
-	/* M09/M12 does not send header or CRC */
-	if (tsdata->version == EDT_M06) {
-		if (rdbuf[0] != 0xaa || rdbuf[1] != 0xaa ||
-			rdbuf[2] != datalen) {
-			dev_err_ratelimited(dev,
-					"Unexpected header: %02x%02x%02x!\n",
-					rdbuf[0], rdbuf[1], rdbuf[2]);
-			goto out;
-		}
-
-		if (!edt_ft5x06_ts_check_crc(tsdata, rdbuf, datalen))
-			goto out;
-	}
-
-	for (i = 0; i < tsdata->max_support_points; i++) {
-		u8 *buf = &rdbuf[i * tplen + offset];
-
-		type = buf[0] >> 6;
-		/* ignore Reserved events */
-		if (type == TOUCH_EVENT_RESERVED)
-			continue;
-
-		/* M06 sometimes sends bogus coordinates in TOUCH_DOWN */
-		if (tsdata->version == EDT_M06 && type == TOUCH_EVENT_DOWN)
-			continue;
-
-		x = get_unaligned_be16(buf) & 0x0fff;
-		y = get_unaligned_be16(buf + 2) & 0x0fff;
-		/* The FT5x26 send the y coordinate first */
-		if (tsdata->version == EV_FT)
-			swap(x, y);
-
-		id = (buf[2] >> 4) & 0x0f;
-
-		input_mt_slot(tsdata->input, id);
-		if (input_mt_report_slot_state(tsdata->input, MT_TOOL_FINGER,
-					       type != TOUCH_EVENT_UP))
-			touchscreen_report_pos(tsdata->input, &tsdata->prop,
-					       x, y, true);
-	}
-
-	input_mt_report_pointer_emulation(tsdata->input, true);
-	input_sync(tsdata->input);
-
-out:
+	schedule_delayed_work(&tsdata->work, 0);
 	return IRQ_HANDLED;
 }
 
@@ -1358,11 +1266,7 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 		tsdata->wake_gpio ? desc_to_gpio(tsdata->wake_gpio) : -1,
 		tsdata->reset_gpio ? desc_to_gpio(tsdata->reset_gpio) : -1);
 
-    edt_wq = create_singlethread_workqueue("edt_workqueue");
-    if (!edt_wq) {
-        pr_err("Failed to create workqueue\n");
-        return -ENOMEM;
-    }
+	INIT_DELAYED_WORK(&tsdata->work, workqueue_fn);
 
 	return 0;
 }
