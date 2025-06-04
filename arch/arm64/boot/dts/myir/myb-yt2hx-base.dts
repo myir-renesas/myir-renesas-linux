@@ -131,6 +131,7 @@
 	sci4_pins: sci4 {
 		pinmux = <RZT2H_PORT_PINMUX(14, 3, 0x14)>, /* SCI4_TXD */
 			 <RZT2H_PORT_PINMUX(14, 2, 0x14)>; /* SCI4_RXD */
+			 bias-pull-up;
 	};
 #endif
 
