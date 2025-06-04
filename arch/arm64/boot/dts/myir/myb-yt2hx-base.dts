@@ -433,7 +433,8 @@
 	linux,rs485-enabled-at-boot-time;
 	rs485-rx-during-tx;
 	rs485-enabled;
-	rts-gpios = <&pinctrl RZT2H_GPIO(14, 0) (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+	// rts-gpios = <&pinctrl RZT2H_GPIO(14, 0) (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+	rs485-de-gpios = <&pinctrl RZT2H_GPIO(14, 0) (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
 	status = "okay";
 };
 
