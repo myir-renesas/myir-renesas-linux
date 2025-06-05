@@ -24,7 +24,7 @@
 #include "myb-yt2hx-base.dts"
 
 / {
-	model = "Renesas Development EVK based on r9a09g077m44";
+	model = "MYIR2 Renesas Development EVK based on r9a09g077m44";
 	compatible = "renesas,r9a09g077m44-dev", "renesas,r9a09g077m44", "renesas,r9a09g077";
 
 	aliases {
