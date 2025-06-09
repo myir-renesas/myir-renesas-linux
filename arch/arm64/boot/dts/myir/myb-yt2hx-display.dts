@@ -5,21 +5,36 @@
  * Copyright (C) 2024 MYiR Electronics Corp.
  */
 
-
 /*
  * Set DISPLAY_RGB to below values to select using of:
- * - 1: Display-rgb
- * - 0: CON
- *  When the display is turned on, SCI4, SCI1, TF cannot be used because of the PIN reuse function.
+ * - 1: Choose Display-rgb
+ * - 0: Set SW11, Choose RS232
+ *  When the display is turned on, SCI4, SCI1 cannot be used because of the PIN reuse function.
  */
-#define		SEL_DISPLAY_RGB                         0
+#define	SEL_DISPLAY_RGB     0
 
 /*
- * Set SEL_ETH_CON to below values to select using of:
- * - 1: ETH
+ * Set SEL_ETH2_CON to below values to select using of:
+ * - 1: ETH2
  * - 0: CON
  */
-#define		SEL_ETH_CON			1
+#define	SEL_ETH2_CON		1
+
+/*
+ * Set SEL_ETH3_CON to below values to select using of:
+ * - 1: ETH3, alse Support ETH3's phy ref_clk input.
+ * - 0: CON, alse Support for RS485's TX¡¢RX¡¢DE Pin enable.
+ */
+#define	SEL_ETH3_CON		1
+
+// --------------------------------------------------------------------------------------
+// |         	Func Config	    		| SEL_DISPLAY_RGB | SEL_ETH2_CON | SEL_ETH3_CON |
+// --------------------------------------------------------------------------------------
+// | eth1 + eth2 + lan0 + lan1 + rs232 	|        0        |       1      |       1      | 	Note: RGB and RS485 Can not Used
+// | rs485 + eth2 + lan0 + lan1 + rs232	|        0        |       1      |       0      |	Note: RGB and eth1 Can not Used
+// | 		RGB + eth2 + rs485			|        1        |       1      |       0      |	Note: eth1 and lan0 and lan1 and RS232 Can not Used
+// | 	RGB + eth1 + eth2 + rs485		|        1        |       1      |       1      |	Note: lan0 and lan1 and RS232 Can not Used 
+// --------------------------------------------------------------------------------------
 
 #include "myb-yt2hx-base.dts"
 
@@ -85,30 +100,55 @@
 		// 		linux,default-trigger = "heartbeat";
 		// };
 
-		led2 {
-				gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
-				label = "display_con";
+		/* 
+		 	S=L, nA=nB1, --> LCD
+			S=H, nA=nB2, --> CON and P11_0_ETH_RESET
+		 */
+		display_con {
+			label = "display_con";
+			gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
+
 			#if (SEL_DISPLAY_RGB)
+				linux,default-trigger = "default-off";
 				default-state = "off";
 			#else
+				linux,default-trigger = "default-on";
 				default-state = "on";
 			#endif
 		};
 
-		led3 {
-				gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
-				label = "eth_con";
-			#if (SEL_ETH_CON)
+		/* 
+		 	S=L, nA=nB1, --> ETH2
+			S=H, nA=nB2, --> CON
+		 */
+		eth2_con {
+			label = "eth2_con";
+			gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_ETH2_CON)
+				linux,default-trigger = "default-off";
 				default-state = "off";
 			#else
+				linux,default-trigger = "default-on";
 				default-state = "on";
 			#endif
 		};
 
-		led4 {
-				gpios = <&pinctrl RZT2H_GPIO(34, 7) GPIO_ACTIVE_HIGH>;
-				label = "eth0";
+		/* 
+		 	S=L, nA=nB1, --> ETH3
+			S=H, nA=nB2, --> CON
+		 */
+		eth3_con {
+			label = "eth3_con";
+			gpios = <&pinctrl RZT2H_GPIO(8, 5) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_ETH3_CON)
+				linux,default-trigger = "default-off";
 				default-state = "off";
+			#else
+				linux,default-trigger = "default-on";
+				default-state = "on";
+			#endif
 		};
 
     };
