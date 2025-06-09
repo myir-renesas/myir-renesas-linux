@@ -94,7 +94,6 @@ struct sci_port {
 	unsigned int			sampling_rate_mask;
 	resource_size_t			reg_size;
 	struct mctrl_gpios		*gpios;
-	struct gpio_desc		*rs485_de_gpios;
 
 	/* Clocks */
 	struct clk			*clks[SCI_NUM_CLKS];
@@ -263,7 +262,8 @@ static int sci_config_rs485(struct uart_port *port,
 			dcr &= DCR_DEPOL;
 			rs485conf->flags &= ~SER_RS485_RTS_AFTER_SEND;
 		} else {
-			dcr |= DCR_DEPOL;
+			//dcr |= DCR_DEPOL;
+			dcr &= ~DCR_DEPOL;
 			rs485conf->flags |= SER_RS485_RTS_AFTER_SEND;
 		}
 
@@ -287,8 +287,8 @@ static int sci_init_rs485(struct uart_port *port,
 	struct serial_rs485 *rs485conf = &port->rs485;
 
 	rs485conf->flags = 0;
-	rs485conf->delay_rts_before_send = 5;
-	rs485conf->delay_rts_after_send = 5;
+	rs485conf->delay_rts_before_send = 0;
+	rs485conf->delay_rts_after_send = 0;
 
 	if (!pdev->dev.of_node)
 		return -ENODEV;
@@ -303,10 +303,6 @@ static void sci_start_tx(struct uart_port *port)
 	unsigned int ctrl, new;
 
 	if (rs485conf->flags & SER_RS485_ENABLED) {
-			mdelay(rs485conf->delay_rts_after_send);
-			gpiod_set_value_cansleep(sp->rs485_de_gpios, 1);
-			mdelay(rs485conf->delay_rts_after_send);
-
 		if (rs485conf->flags & SER_RS485_RTS_ON_SEND) {
 			mctrl_gpio_set(sp->gpios, sp->port.mctrl | TIOCM_RTS);
 		} else {
@@ -339,7 +335,6 @@ static void sci_start_tx(struct uart_port *port)
 
 		sp->cookie_tx = 0;
 		schedule_work(&sp->work_tx);
-
 	}
 
 	/* DMA need TIE enable */
@@ -392,7 +387,6 @@ static void sci_stop_tx(struct uart_port *port)
 static void sci_start_rx(struct uart_port *port)
 {
 	unsigned int ctrl;
-	struct sci_port *sp = to_sci_port(port);
 
 	ctrl = serial_port_in(port, CCR0);
 	ctrl |= CCR0_RIE;
@@ -411,10 +405,9 @@ static void sci_stop_rx(struct uart_port *port)
 
 	serial_port_out(port, CCR0, ctrl);
 
-	if (rs485conf->flags & SER_RS485_ENABLED){
+	if (rs485conf->flags & SER_RS485_ENABLED)
 		port->hw_stopped = 0;
 	}
-}
 
 static void sci_clear_CFC(struct uart_port *port, unsigned int mask)
 {
@@ -641,7 +634,7 @@ static void sci_receive_chars(struct uart_port *port)
 	}
 
 	if (rs485conf->flags & SER_RS485_ENABLED)
-		port->hw_stopped = 1;
+		port->hw_stopped = 0;
 }
 
 static int sci_handle_errors(struct uart_port *port)
@@ -773,7 +766,6 @@ static void sci_dma_tx_complete(void *arg)
 	unsigned int ctrl, val;
 	const struct plat_sci_reg *reg_csr = sci_getreg(port, CSR);
 	int ret;
-	struct serial_rs485 *rs485conf = &port->rs485;
 
 	dev_dbg(port->dev, "%s(%d)\n", __func__, port->line);
 
@@ -809,12 +801,6 @@ static void sci_dma_tx_complete(void *arg)
 	}
 
 	spin_unlock_irqrestore(&port->lock, flags);
-
-	if (s->rs485_de_gpios){
-		mdelay(rs485conf->delay_rts_after_send);
-		gpiod_set_value_cansleep(s->rs485_de_gpios, 0);
-		mdelay(rs485conf->delay_rts_after_send);
-	}
 }
 
 /* Locking: called with port lock held */
@@ -896,6 +882,7 @@ static void sci_dma_rx_complete(void *arg)
 	struct dma_async_tx_descriptor *desc;
 	unsigned long flags;
 	int active, count = 0;
+	struct serial_rs485 *rs485conf = &port->rs485;
 
 	dev_dbg(port->dev, "%s(%d) active cookie %d\n", __func__, port->line,
 		s->active_rx);
@@ -926,6 +913,11 @@ static void sci_dma_rx_complete(void *arg)
 	s->active_rx = s->cookie_rx[!active];
 
 	dma_async_issue_pending(chan);
+
+	// rx end
+	if (rs485conf->flags & SER_RS485_ENABLED){
+		port->hw_stopped = 0;
+	}
 
 	spin_unlock_irqrestore(&port->lock, flags);
 	dev_dbg(port->dev, "%s: cookie %d #%d, new active cookie %d\n",
@@ -1022,7 +1014,6 @@ static void sci_dma_tx_work_fn(struct work_struct *work)
 	 * transmit till the end, and then the rest. Take the port lock to get a
 	 * consistent xmit buffer state.
 	 */
-
 	spin_lock_irq(&port->lock);
 	head = xmit->head;
 	tail = xmit->tail;
@@ -1062,9 +1053,8 @@ static void sci_dma_tx_work_fn(struct work_struct *work)
 		__func__, xmit->buf, tail, head, s->cookie_tx);
 
 	dma_async_issue_pending(chan);
-	if (s->dma_in_progress){
+	if (s->dma_in_progress)
 		sci_start_tx(port);
-	}
 	return;
 
 switch_to_pio:
@@ -1134,13 +1124,13 @@ static enum hrtimer_restart sci_dma_rx_timer_fn(struct hrtimer *t)
 
 	sci_dma_rx_reenable_irq(s);
 
-	spin_unlock_irqrestore(&port->lock, flags);
-
 	// rx end
 	if (rs485conf->flags & SER_RS485_ENABLED){
-		mdelay(1);
+		// mdelay(1);
 		port->hw_stopped = 0;
 	}
+
+	spin_unlock_irqrestore(&port->lock, flags);
 
 	return HRTIMER_NORESTART;
 }
@@ -1324,7 +1314,7 @@ static irqreturn_t sci_rx_interrupt(int irq, void *ptr)
 		start_hrtimer_us(&s->rx_timer, s->rx_timeout);
 
 		if (rs485conf->flags & SER_RS485_ENABLED)
-			port->hw_stopped = 1;
+			port->hw_stopped = 0;
 
 		return IRQ_HANDLED;
 	}
@@ -1879,7 +1869,8 @@ done:
 			dcr_val &= DCR_DEPOL;
 			rs485conf->flags &= ~SER_RS485_RTS_AFTER_SEND;
 		} else {
-			dcr_val |= DCR_DEPOL;
+			//dcr_val |= DCR_DEPOL;
+			dcr_val &= ~DCR_DEPOL;
 			rs485conf->flags |= SER_RS485_RTS_AFTER_SEND;
 		}
 
@@ -2094,7 +2085,6 @@ static int sci_init_single(struct platform_device *dev,
 	const struct resource *res;
 	unsigned int i;
 	int ret;
-	struct serial_rs485 *rs485conf = &port->rs485;
 
 	sci_port->cfg	= p;
 
@@ -2109,12 +2099,6 @@ static int sci_init_single(struct platform_device *dev,
 		ret = sci_init_rs485(port, dev);
 		if (ret)
 			return ret;
-
-		sci_port->rs485_de_gpios = devm_gpiod_get_optional(port->dev,"rs485-de", GPIOD_OUT_LOW);
-		if (IS_ERR(sci_port->rs485_de_gpios)) {
-			int error = PTR_ERR(sci_port->rs485_de_gpios);
-			dev_dbg(port->dev, "the RS485 DE GPIO was not obtained \n");
-		}
 	}
 
 	res = platform_get_resource(dev, IORESOURCE_MEM, 0);

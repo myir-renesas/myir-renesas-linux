@@ -233,8 +233,8 @@
 			interrupt-names = "eri", "rxi", "txi", "tei";
 			clocks = <&cpg CPG_MOD R9A09G077_SCI3_CLK>;
 			clock-names = "fck";
-			dmas = <&dmac0 0x265C>, <&dmac0 0x265B>;
-			dma-names = "tx", "rx";
+			// dmas = <&dmac0 0x265C>, <&dmac0 0x265B>;
+			// dma-names = "tx", "rx";
 			power-domains = <&cpg>;
 			status = "disabled";
 		};
