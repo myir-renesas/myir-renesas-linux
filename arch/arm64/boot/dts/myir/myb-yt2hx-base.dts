@@ -635,7 +635,7 @@
 };
 
 &pcie0 {
-	status = "okay";
+	status = "disabled";
 };
 
 #if (SEL_ETHSW)
@@ -760,7 +760,7 @@
 &xspi0 {
 	pinctrl-0 = <&xspi0_pins>;
 	pinctrl-names = "default";
-	status = "okay";
+	status = "disabled";
 
 	flash@0 {
 		compatible = "macronix,mx25uw51245g","jedec,spi-nor";
