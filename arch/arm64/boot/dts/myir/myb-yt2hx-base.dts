@@ -100,6 +100,17 @@
                 hw_margin_ms = <1000>;
         };
 
+    gpio-keys {
+		compatible = "gpio-keys";
+		button@1 {
+				label = "User";
+				interrupt-parent = <&pinctrl>;
+				interrupts = <GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;  // IRQ15
+				gpio-key,wakeup;
+				linux,code = <103>;
+		};
+    };
+
 };
 
 &pinctrl {
