@@ -163,8 +163,8 @@
 	};
 
 	i2c2_pins: i2c2 {
-			pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x17)>, /* SDA */
-					<RZT2H_PORT_PINMUX(6, 7, 0x17)>; /* SCL */
+		pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x17)>, /* SDA */
+				<RZT2H_PORT_PINMUX(6, 7, 0x17)>; /* SCL */
 	};
 
 	mdio1_pins: gmac_mdio1 {
@@ -356,7 +356,7 @@
 	};
 
 	icu_pins: icu_pins {
-		pinmux = <RZT2H_PORT_PINMUX(30, 7, 0x0)>; /* IRQ14 */
+		pinmux = <RZT2H_PORT_PINMUX(0, 4, 0x0)>; /* IRQ3 */
 	};
 
 	can0_pins: can0 {
@@ -382,7 +382,9 @@
 			 <RZT2H_PORT_PINMUX(18, 3, 0x14)>; /* SCI1_RXD */
 		bias-pull-up;
 	};
-#else
+#endif
+
+#if (SEL_DISPLAY_RGB)
 	du_pins: du {
 		du_data {
 			pinmux = <RZT2H_PORT_PINMUX(17, 7, 0x28)>, /* LCDC_DATB0 */
@@ -415,23 +417,22 @@
 		};
 
 		du_clk {
-			pinmux = <RZT2H_PORT_PINMUX( 9, 4, 0x28)>; /* LCDC_CLK */
+			pinmux = <RZT2H_PORT_PINMUX(9, 4, 0x28)>; /* LCDC_CLK */
 			drive-strength = <3>;
 		};
 
 		du_sync {
-			pinmux = <RZT2H_PORT_PINMUX( 9, 5, 0x28)>, /* LCDC_HSYNC */
-				 <RZT2H_PORT_PINMUX( 9, 6, 0x28)>; /* LCDC_VSYNC */
+			pinmux = <RZT2H_PORT_PINMUX(9, 5, 0x28)>, /* LCDC_HSYNC */
+				 <RZT2H_PORT_PINMUX(9, 6, 0x28)>; /* LCDC_VSYNC */
 			drive-strength = <3>;
 		};
 
 		du_de {
-			pinmux = <RZT2H_PORT_PINMUX( 9, 7, 0x28)>; /* LCDC_DE */
+			pinmux = <RZT2H_PORT_PINMUX(9, 7, 0x28)>; /* LCDC_DE */
 			drive-strength = <3>;
 		};
 	};
 #endif
-
 };
 
 &extal {

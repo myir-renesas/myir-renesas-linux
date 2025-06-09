@@ -11,7 +11,7 @@
  * - 0: Set SW11, Choose RS232
  *  When the display is turned on, SCI4, SCI1 cannot be used because of the PIN reuse function.
  */
-#define	SEL_DISPLAY_RGB     0
+#define	SEL_DISPLAY_RGB     1
 
 /*
  * Set SEL_ETH2_CON to below values to select using of:
@@ -23,7 +23,7 @@
 /*
  * Set SEL_ETH3_CON to below values to select using of:
  * - 1: ETH3, alse Support ETH3's phy ref_clk input.
- * - 0: CON, alse Support for RS485's TX¡¢RX¡¢DE Pin enable.
+ * - 0: CON, alse Support for RS485's TX.RX.DE Pin enable.
  */
 #define	SEL_ETH3_CON		1
 
@@ -71,17 +71,17 @@
 
 #if (SEL_DISPLAY_RGB)
 	panel@0 {
-			compatible = "myirtft_panel_7inch";
-			power-supply = <&reg_3p3v>;
-			enable-gpios = <&pinctrl RZT2H_GPIO(11, 7) GPIO_ACTIVE_HIGH>;// backlight
-			status = "okay";
-			no-hpd;
+		compatible = "myirtft_panel_7inch";
+		power-supply = <&reg_3p3v>;
+		enable-gpios = <&pinctrl RZT2H_GPIO(11, 7) GPIO_ACTIVE_HIGH>; // backlight
+		status = "okay";
+		no-hpd;
 
-			port {
-					panel_lcd_in: endpoint {
-							remote-endpoint = <&du_out_rgb>;
-					};
+		port {
+			panel_lcd_in: endpoint {
+				remote-endpoint = <&du_out_rgb>;
 			};
+		};
 	};
 #endif
 
@@ -166,9 +166,9 @@
 
 	ports {
 		port@0 {
-				du_out_rgb: endpoint {
-						remote-endpoint = <&panel_lcd_in>;
-				};
+			du_out_rgb: endpoint {
+				remote-endpoint = <&panel_lcd_in>;
+			};
 		};
     };
 #else
@@ -176,15 +176,15 @@
 #endif
 };
 
-&i2c2 {
+&i2c0 {
 	status = "okay";
 
 	ft5x06: ft5x06@38 {
-			compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
-			reg = <0x38>;
-			interrupts = <GIC_SPI 22 IRQ_TYPE_EDGE_RISING>;   // IRQ6
-			reset-gpios = <&pinctrl RZT2H_GPIO(2, 4) GPIO_ACTIVE_HIGH>;
-			touchscreen-size-x=<800>;
-			touchscreen-size-y=<480>;
+		compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
+		reg = <0x38>;
+		interrupts = <GIC_SPI 19 IRQ_TYPE_EDGE_RISING>;   // IRQ3
+		reset-gpios = <&pinctrl RZT2H_GPIO(2, 4) GPIO_ACTIVE_HIGH>;
+		touchscreen-size-x=<800>;
+		touchscreen-size-y=<480>;
 	};
 };
