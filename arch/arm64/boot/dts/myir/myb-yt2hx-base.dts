@@ -64,6 +64,31 @@
 			reusable;
 			reg = <0x0 0xD0000000 0x0 0x10000000>;
 		};
+		
+        cr52ddr: cr52ddr@260000000 {
+            compatible = "shared-dma-pool";
+            reg = <0x02 0x60000000 0x0 0x9000000>;
+            no-map;
+        };
+        
+        vdev0vring0: vdev0vring0@0x261000000 {
+            compatible = "shared-dma-pool";
+            reg = <0x2 0x61000000 0x0 0x50000>;
+            no-map;
+        };
+        
+        vdev0vring1: vdev0vring1@0x261050000 {
+            compatible = "shared-dma-pool";
+            reg = <0x2 0x61050000 0x0 0x50000>;
+            no-map;
+        };
+        
+        vdev0buffer: vdev0buffer@0x261200000 {
+            compatible = "shared-dma-pool";
+            reg = <0x2 0x61200000 0x0 0x300000>;
+            no-map;
+        };
+
 	};
 
 	reg_1p8v: regulator0 {
