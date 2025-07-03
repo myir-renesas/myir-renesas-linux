@@ -1,0 +1,151 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Device Tree Source for the MYiR-T2H Development EVK board
+ *
+ * Copyright (C) 2024 MYiR Electronics Corp.
+ */
+
+/*
+ * Set DISPLAY_RGB to below values to select using of:
+ * - 1: Choose Display-rgb
+ * - 0: Set SW11, Choose RS232
+ *  When the display is turned on, SCI4, SCI1 cannot be used because of the PIN reuse function.
+ */
+#define	SEL_DISPLAY_RGB     0
+
+/*
+ * Set SEL_ETH2_CON to below values to select using of:
+ * - 1: ETH2
+ * - 0: CON
+ */
+#define	SEL_ETH2_CON		1
+
+/*
+ * Set SEL_ETH3_CON to below values to select using of:
+ * - 1: ETH3, alse Support ETH3's phy ref_clk input.
+ * - 0: CON, alse Support for RS485's TX.RX.DE Pin enable.
+ */
+#define	SEL_ETH3_CON		1
+
+// --------------------------------------------------------------------------------------
+// |         	Func Config	    		| SEL_DISPLAY_RGB | SEL_ETH2_CON | SEL_ETH3_CON |
+// --------------------------------------------------------------------------------------
+// | eth1 + eth2 + lan0 + lan1 + rs232 	|        0        |       1      |       1      | 	Note: RGB and RS485 Can not Used
+// | rs485 + eth2 + lan0 + lan1 + rs232	|        0        |       1      |       0      |	Note: RGB and eth1 Can not Used
+// | 		RGB + eth2 + rs485			|        1        |       1      |       0      |	Note: eth1 and lan0 and lan1 and RS232 Can not Used
+// | 	RGB + eth1 + eth2 + rs485		|        1        |       1      |       1      |	Note: lan0 and lan1 and RS232 Can not Used 
+// --------------------------------------------------------------------------------------
+
+#include "myb-yt2hx-base.dts"
+
+/ {
+	model = "MYIR2 Renesas Development EVK based on r9a09g077m44";
+	compatible = "renesas,r9a09g077m44-dev", "renesas,r9a09g077m44", "renesas,r9a09g077";
+
+	aliases {
+		serial0 = &sci0;
+		serial1 = &sci1;
+		serial3 = &sci3;
+		serial4 = &sci4;
+		mmc0 = &sdhi0;
+		mmc1 = &sdhi1;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		i2c2 = &i2c2;
+		ethernet0 = &gmac1;
+		ethernet1 = &gmac2;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		global_cma: linux,cma@E0000000 {
+			compatible = "shared-dma-pool";
+			linux,cma-default;
+			reusable;
+			reg = <0x0 0xD0000000 0x0 0x10000000>;
+		};
+	};
+
+
+    leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		led0 {
+			label = "user_led";
+			gpios = <&pinctrl RZT2H_GPIO(22, 5) GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "default-on";
+			default-status = "on";
+		};
+
+		led1 {
+			label = "system_led";
+			gpios = <&pinctrl RZT2H_GPIO(32, 5) GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+			default-status = "on";
+		};
+
+		/* 
+		 	S=L, nA=nB1, --> LCD
+			S=H, nA=nB2, --> CON and P11_0_ETH_RESET
+		 */
+		display_con {
+			label = "display_con";
+			gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
+
+				linux,default-trigger = "default-on";
+				default-state = "on";
+		};
+
+		/* 
+		 	S=L, nA=nB1, --> ETH2
+			S=H, nA=nB2, --> CON
+		 */
+		eth2_con {
+			label = "eth2_con";
+			gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_ETH2_CON)
+				linux,default-trigger = "default-off";
+				default-state = "off";
+			#else
+				linux,default-trigger = "default-on";
+				default-state = "on";
+			#endif
+		};
+
+		/* 
+		 	S=L, nA=nB1, --> ETH3
+			S=H, nA=nB2, --> CON
+		 */
+		eth3_con {
+			label = "eth3_con";
+			gpios = <&pinctrl RZT2H_GPIO(8, 5) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_ETH3_CON)
+				linux,default-trigger = "default-off";
+				default-state = "off";
+			#else
+				linux,default-trigger = "default-on";
+				default-state = "on";
+			#endif
+		};
+		
+		#if (!SEL_ETH3_CON)
+		eth3refclk_rs485_sw {
+			label = "eth3refclk_rs485_sw";
+			gpios = <&pinctrl RZT2H_GPIO(34, 6) GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "default-on";
+			default-state = "on";
+		};
+		#endif
+    };
+};
+
+&du {
+    status = "disabled";
+};
+
