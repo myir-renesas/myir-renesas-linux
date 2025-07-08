@@ -17,7 +17,7 @@
  * - 1: ETH
  * - 0: DNP
  */
-#define     SEL_ETHSW           0
+#define     SEL_ETHSW           1
 
 / {
 	model = "Renesas Development EVK based on r9a09g077m44";

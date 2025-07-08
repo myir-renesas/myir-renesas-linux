@@ -36,7 +36,7 @@
 // | 	RGB + eth1 + eth2 + rs485		|        1        |       1      |       1      |	Note: lan0 and lan1 and RS232 Can not Used 
 // --------------------------------------------------------------------------------------
 
-#include "myb-yt2hx-base.dts"
+#include "myb-yt2hx-base-ethsw.dts"
 
 / {
 	model = "MYIR2 Renesas Development EVK based on r9a09g077m44";
@@ -61,7 +61,7 @@
 		#size-cells = <2>;
 		ranges;
 
-		global_cma: linux,cma@E0000000 {
+		global_cma: linux,cma@D0000000 {
 			compatible = "shared-dma-pool";
 			linux,cma-default;
 			reusable;
