@@ -102,21 +102,24 @@
 			linux,default-trigger = "heartbeat";
 			default-status = "on";
 		};
+	};
+
+	gpio-select {
+			    compatible = "linux-gpio-select";
+               		    #size-cells = <0>;
 
 		/* 
 		 	S=L, nA=nB1, --> LCD
 			S=H, nA=nB2, --> CON and P11_0_ETH_RESET
 		 */
 		display_con {
-			label = "display_con";
+			gpio-export,name = "display_con";
 			gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
 
 			#if (SEL_DISPLAY_RGB)
-				linux,default-trigger = "default-off";
-				default-state = "off";
+				gpio-export,output = <0>;
 			#else
-				linux,default-trigger = "default-on";
-				default-state = "on";
+				gpio-export,output = <1>;
 			#endif
 		};
 
@@ -125,15 +128,13 @@
 			S=H, nA=nB2, --> CON
 		 */
 		eth2_con {
-			label = "eth2_con";
+			gpio-export,name = "eth2_con";
 			gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
 
 			#if (SEL_ETH2_CON)
-				linux,default-trigger = "default-off";
-				default-state = "off";
+				gpio-export,output = <0>;
 			#else
-				linux,default-trigger = "default-on";
-				default-state = "on";
+				gpio-export,output = <1>;
 			#endif
 		};
 
@@ -142,22 +143,21 @@
 			S=H, nA=nB2, --> CON
 		 */
 		eth3_con {
-			label = "eth3_con";
+			gpio-export,name = "eth3_con";
 			gpios = <&pinctrl RZT2H_GPIO(8, 5) GPIO_ACTIVE_HIGH>;
 
 			#if (SEL_ETH3_CON)
-				linux,default-trigger = "default-off";
-				default-state = "off";
+				gpio-export,output = <0>;
 			#else
-				linux,default-trigger = "default-on";
-				default-state = "on";
+				gpio-export,output = <1>;
 			#endif
 		};
 		
 		#if (!SEL_ETH3_CON)
 		eth3refclk_rs485_sw {
-			label = "eth3refclk_rs485_sw";
+			gpio-export,name = "eth3refclk_rs485_sw";
 			gpios = <&pinctrl RZT2H_GPIO(34, 6) GPIO_ACTIVE_HIGH>;
+			gpio-export,output = <1>;
 			linux,default-trigger = "default-on";
 			default-state = "on";
 		};

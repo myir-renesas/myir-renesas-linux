@@ -102,6 +102,13 @@ config GPIO_REGMAP
 	depends on REGMAP
 	tristate
 
+config GPIO_SELECT
+	tristate "Export GPIO to userspace by DT"
+	depends on OF_GPIO && GPIO_SYSFS
+	help
+	  Export GPIO to /sys/class/gpio/ direction. And set the
+	  default state by DT.
+
 # put drivers in the right section, in alphabetical order
 
 # This symbol is selected by both I2C and SPI expanders
