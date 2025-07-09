@@ -799,7 +799,7 @@
 };
 
 &rtc {
-	status = "okay";
+	status = "disabled";
 };
 
 &intc_ex {
