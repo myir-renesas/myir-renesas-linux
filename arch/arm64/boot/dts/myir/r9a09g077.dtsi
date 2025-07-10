@@ -144,6 +144,8 @@
 			gpio-controller;
 			#gpio-cells = <2>;
 			gpio-ranges = <&pinctrl 0 0 287>;
+			interrupt-controller;
+   			//#interrupt-cells = <2>;
 		};
 
 		intc_ex: intc_ex@802A0000 {
