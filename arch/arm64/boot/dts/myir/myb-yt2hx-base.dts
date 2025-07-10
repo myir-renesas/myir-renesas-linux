@@ -864,6 +864,7 @@
 	status = "okay";
 };
 
+
 &canfd {
 	pinctrl-0 = <&can0_pins>;
 	pinctrl-names = "default";

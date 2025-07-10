@@ -1,0 +1,201 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Device Tree Source for the MYiR-T2H Development EVK board
+ *
+ * Copyright (C) 2024 MYiR Electronics Corp.
+ */
+
+/*
+ * Set DISPLAY_RGB to below values to select using of:
+ * - 1: Choose Display-rgb
+ * - 0: Set SW11, Choose RS232
+ *  When the display is turned on, SCI4, SCI1 cannot be used because of the PIN reuse function.
+ */
+#define	SEL_DISPLAY_RGB     1
+
+/*
+ * Set SEL_ETH2_CON to below values to select using of:
+ * - 1: ETH2
+ * - 0: CON
+ */
+#define	SEL_ETH2_CON		1
+
+/*
+ * Set SEL_ETH3_CON to below values to select using of:
+ * - 1: ETH3, alse Support ETH3's phy ref_clk input.
+ * - 0: CON, alse Support for RS485's TX.RX.DE Pin enable.
+ */
+#define	SEL_ETH3_CON		1
+
+// --------------------------------------------------------------------------------------
+// |         	Func Config	    		| SEL_DISPLAY_RGB | SEL_ETH2_CON | SEL_ETH3_CON |
+// --------------------------------------------------------------------------------------
+// | eth1 + eth2 + lan0 + lan1 + rs232 	|        0        |       1      |       1      | 	Note: RGB and RS485 Can not Used
+// | rs485 + eth2 + lan0 + lan1 + rs232	|        0        |       1      |       0      |	Note: RGB and eth1 Can not Used
+// | 		RGB + eth2 + rs485			|        1        |       1      |       0      |	Note: eth1 and lan0 and lan1 and RS232 Can not Used
+// | 	RGB + eth1 + eth2 + rs485		|        1        |       1      |       1      |	Note: lan0 and lan1 and RS232 Can not Used 
+// --------------------------------------------------------------------------------------
+
+#include "myb-yt2hx-base.dts"
+
+/ {
+	model = "MYIR2 Renesas Development EVK based on r9a09g077m44";
+	compatible = "renesas,r9a09g077m44-dev", "renesas,r9a09g077m44", "renesas,r9a09g077";
+
+	aliases {
+		serial0 = &sci0;
+		serial1 = &sci1;
+		serial3 = &sci3;
+		serial4 = &sci4;
+		mmc0 = &sdhi0;
+		mmc1 = &sdhi1;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		i2c2 = &i2c2;
+		ethernet0 = &gmac1;
+		ethernet1 = &gmac2;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		global_cma: linux,cma@D0000000 {
+			compatible = "shared-dma-pool";
+			linux,cma-default;
+			reusable;
+			reg = <0x0 0xD0000000 0x0 0x10000000>;
+		};
+	};
+
+#if (SEL_DISPLAY_RGB)
+	panel@0 {
+		compatible = "myirtft_panel_7inch";
+		power-supply = <&reg_3p3v>;
+		enable-gpios = <&pinctrl RZT2H_GPIO(11, 7) GPIO_ACTIVE_HIGH>; // backlight
+		status = "okay";
+		no-hpd;
+
+		port {
+			panel_lcd_in: endpoint {
+				remote-endpoint = <&du_out_rgb>;
+			};
+		};
+	};
+#endif
+
+    leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		led0 {
+			label = "user_led";
+			gpios = <&pinctrl RZT2H_GPIO(22, 5) GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "default-on";
+			default-status = "on";
+		};
+
+		led1 {
+			label = "system_led";
+			gpios = <&pinctrl RZT2H_GPIO(32, 5) GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			default-status = "on";
+		};
+	};
+
+	gpio-select {
+			    compatible = "linux-gpio-select";
+               		    #size-cells = <0>;
+
+		/* 
+		 	S=L, nA=nB1, --> LCD
+			S=H, nA=nB2, --> CON and P11_0_ETH_RESET
+		 */
+		display_con {
+			gpio-export,name = "display_con";
+			gpios = <&pinctrl RZT2H_GPIO(32, 2) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_DISPLAY_RGB)
+				gpio-export,output = <0>;
+			#else
+				gpio-export,output = <1>;
+			#endif
+		};
+
+		/* 
+		 	S=L, nA=nB1, --> ETH2
+			S=H, nA=nB2, --> CON
+		 */
+		eth2_con {
+			gpio-export,name = "eth2_con";
+			gpios = <&pinctrl RZT2H_GPIO(32, 3) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_ETH2_CON)
+				gpio-export,output = <0>;
+			#else
+				gpio-export,output = <1>;
+			#endif
+		};
+
+		/* 
+		 	S=L, nA=nB1, --> ETH3
+			S=H, nA=nB2, --> CON
+		 */
+		eth3_con {
+			gpio-export,name = "eth3_con";
+			gpios = <&pinctrl RZT2H_GPIO(8, 5) GPIO_ACTIVE_HIGH>;
+
+			#if (SEL_ETH3_CON)
+				gpio-export,output = <0>;
+			#else
+				gpio-export,output = <1>;
+			#endif
+		};
+		
+		#if (!SEL_ETH3_CON)
+		eth3refclk_rs485_sw {
+			gpio-export,name = "eth3refclk_rs485_sw";
+			gpios = <&pinctrl RZT2H_GPIO(34, 6) GPIO_ACTIVE_HIGH>;
+			gpio-export,output = <1>;
+			linux,default-trigger = "default-on";
+			default-state = "on";
+		};
+		#endif
+    };
+};
+
+&du {
+#if (SEL_DISPLAY_RGB)
+	pinctrl-0 = <&du_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	ports {
+		port@0 {
+			du_out_rgb: endpoint {
+				remote-endpoint = <&panel_lcd_in>;
+			};
+		};
+    };
+#else
+    status = "disabled";
+#endif
+};
+
+&i2c0 {
+	status = "okay";
+
+	ft5x06: ft5x06@38 {
+		compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
+		reg = <0x38>;
+		interrupts = <GIC_SPI 19 IRQ_TYPE_EDGE_RISING>;   // IRQ3
+		reset-gpios = <&pinctrl RZT2H_GPIO(2, 4) GPIO_ACTIVE_HIGH>;
+		touchscreen-size-x=<800>;
+		touchscreen-size-y=<480>;
+	};
+};
+
+&canfd {
+	/delete-property/ renesas,no-can-fd;
+};
