@@ -368,7 +368,7 @@
 		};
 
 		xspi0_rst {
-			pinmux = <RZT2H_PORT_PINMUX(7, 0, 0x1C)>; /* XSPI0_RESET0 */
+			pinmux = <RZT2H_PORT_PINMUX(6, 6, 0x1C)>; /* XSPI0_RESET0 */
 		};
 
 		xspi0_ds {
@@ -510,6 +510,7 @@
 	linux,rs485-enabled-at-boot-time;
 	rs485-rx-during-tx;
 	rs485-enabled;
+	//rs485-rts-delay = <1 1>;
 	status = "okay";
 };
 
@@ -811,13 +812,15 @@
 &xspi0 {
 	pinctrl-0 = <&xspi0_pins>;
 	pinctrl-names = "default";
-	status = "disabled";
+	status = "okay";
+	//cs-gpios = <&pinctrl RZT2H_GPIO(5, 3) GPIO_ACTIVE_LOW>;
 
 	flash@0 {
 		compatible = "macronix,mx25uw51245g","jedec,spi-nor";
 		reg = <0>;
 		m25p,fast-read;
-		spi-max-frequency = <50000000>;
+		spi-max-frequency = <133000000>;
+
 		spi-tx-bus-width = <1>;
 		spi-rx-bus-width = <1>;
 
@@ -828,21 +831,23 @@
 
 			partition@000000 {
 				label = "bl2-0";
-				reg = <0x00000000 0x0003C600>;
-				read-only;
+				//reg = <0x00000000 0x0003C600>;
+				reg = <0x00000000 0x04000000>;
+				//read-only;
 			};
-			partition@1FB000 {
-				label = "fip-0";
-				reg = <0x001FB000 0x000AB900>;
-				read-only;
-			};
-			partition@300000 {
-				label = "test-area-0";
-				reg = <0x00300000 0x01000000>;
-			};
+			//partition@1FB000 {
+			//	label = "fip-0";
+			//	reg = <0x001FB000 0x000AB900>;
+			//	read-only;
+			//};
+			//partition@300000 {
+			//	label = "test-area-0";
+			//	reg = <0x00300000 0x04000000>;
+			//};
 		};
 	};
 };
+
 
 &cmt0 {
 	status = "okay";

@@ -25,6 +25,7 @@
  * - 1: ETH3, alse Support ETH3's phy ref_clk input.
  * - 0: CON, alse Support for RS485's TX.RX.DE Pin enable.
  */
+
 #define	SEL_ETH3_CON		1
 
 // --------------------------------------------------------------------------------------
@@ -152,16 +153,17 @@
 				gpio-export,output = <1>;
 			#endif
 		};
-		
+		/*
 		#if (!SEL_ETH3_CON)
 		eth3refclk_rs485_sw {
 			gpio-export,name = "eth3refclk_rs485_sw";
 			gpios = <&pinctrl RZT2H_GPIO(34, 6) GPIO_ACTIVE_HIGH>;
+
 			gpio-export,output = <1>;
 			linux,default-trigger = "default-on";
 			default-state = "on";
 		};
-		#endif
+		#endif*/
     };
 };
 
