@@ -126,6 +126,17 @@
 		#size-cells = <2>;
 		ranges;
 
+		mitigation: soc-mitigation@C0000000 {
+			compatible = "renesas,rzt2h-mitigation";
+			reg = <0 0x80280000 0 0x400>,
+				<0 0x920E0000 0 0x8000>,
+				<0 0x800C0000 0 0x1000>,
+				<0 0x92041000 0 0x2000>,
+				<0 0xC4000000 0 0x2000>;
+			reg-names = "mstop", "vspd", "dmac", "usbf",
+					"ddr_mirror";
+		};
+
 		cpg: clock-controller@80280000 {
 			compatible = "renesas,r9a09g077-cpg";
 			reg = <0 0x80280000 0 0x1000>,
@@ -235,8 +246,8 @@
 			interrupt-names = "eri", "rxi", "txi", "tei";
 			clocks = <&cpg CPG_MOD R9A09G077_SCI3_CLK>;
 			clock-names = "fck";
-			//dmas = <&dmac0 0x265C>, <&dmac0 0x265B>;
-			//dma-names = "tx", "rx";
+			dmas = <&dmac0 0x265C>, <&dmac0 0x265B>;
+			dma-names = "tx", "rx";
 			power-domains = <&cpg>;
 			status = "disabled";
 		};

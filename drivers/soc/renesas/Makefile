@@ -37,5 +37,7 @@ obj-$(CONFIG_SYSC_RCAR)		+= rcar-sysc.o
 obj-$(CONFIG_SYSC_RMOBILE)	+= rmobile-sysc.o
 obj-$(CONFIG_RCAR_CPU_TOPOLOGY)	+= rcar-topology.o
 
+obj-$(CONFIG_ARCH_R9A09G077)	+= rzt2h-mitigation.o
+obj-$(CONFIG_ARCH_R9A09G087)	+= rzt2h-mitigation.o
 # EMS for R-Car Gen3
 obj-$(CONFIG_RCAR_THERMAL_EMS)	+= rcar_ems_ctrl.o
