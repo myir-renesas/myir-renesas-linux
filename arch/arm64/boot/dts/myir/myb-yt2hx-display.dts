@@ -99,7 +99,7 @@
 
 		led1 {
 			label = "system_led";
-			gpios = <&pinctrl RZT2H_GPIO(32, 5) GPIO_ACTIVE_HIGH>;
+			gpios = <&pinctrl RZT2H_GPIO(32, 5) GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 			default-status = "on";
 		};
