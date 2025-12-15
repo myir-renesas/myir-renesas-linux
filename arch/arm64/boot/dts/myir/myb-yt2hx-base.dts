@@ -374,6 +374,10 @@
 		xspi0_ds {
 			pinmux = <RZT2H_PORT_PINMUX(5, 5, 0x1C)>; /* XSPI0_DS */
 		};
+
+		 xspi0_ecs0 {
+                        pinmux = <RZT2H_PORT_PINMUX(7, 5, 0x1C)>; /* XSPI0_ecs0 */
+                };
 	};
 
 	xspi1_pins: xspi1 {
@@ -816,13 +820,13 @@
 	//cs-gpios = <&pinctrl RZT2H_GPIO(5, 3) GPIO_ACTIVE_LOW>;
 
 	flash@0 {
-		compatible = "macronix,mx25uw51245g","jedec,spi-nor";
+		compatible = "macronix,mx25lm51245g","jedec,spi-nor";
 		reg = <0>;
 		m25p,fast-read;
 		spi-max-frequency = <133000000>;
 
-		spi-tx-bus-width = <1>;
-		spi-rx-bus-width = <1>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
 
 		partitions {
 			compatible = "fixed-partitions";
@@ -831,19 +835,22 @@
 
 			partition@000000 {
 				label = "bl2-0";
-				//reg = <0x00000000 0x0003C600>;
-				reg = <0x00000000 0x04000000>;
-				//read-only;
+				reg = <0x00000000 0x0100000>;
+				read-only;
 			};
-			//partition@1FB000 {
-			//	label = "fip-0";
-			//	reg = <0x001FB000 0x000AB900>;
-			//	read-only;
-			//};
-			//partition@300000 {
-			//	label = "test-area-0";
-			//	reg = <0x00300000 0x04000000>;
-			//};
+			partition@100000 {
+				label = "fip-0";
+				reg = <0x00100000 0x0200000>;
+				read-only;
+			};
+			partition@300000 {
+				label = "kernel";
+				reg = <0x00300000 0x01900000>;
+			};
+     			partition@1C00000 {
+                                label = "kernel";
+                                reg = <0x01C00000 0x02400000>;
+                        };
 		};
 	};
 };
