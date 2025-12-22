@@ -251,6 +251,8 @@ static int sci_config_rs485(struct uart_port *port,
 	port->rs485 = *rs485conf;
 
 	rs485conf->flags |= SER_RS485_RX_DURING_TX;
+	rs485conf->flags |= SER_RS485_RTS_ON_SEND;
+	rs485conf->flags |= SER_RS485_ENABLED;
 
 	if (rs485conf->flags & SER_RS485_ENABLED) {
 		ccr3 = serial_port_in(port, CCR3);

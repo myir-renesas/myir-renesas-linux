@@ -510,6 +510,8 @@
 	linux,rs485-enabled-at-boot-time;
 	rs485-rx-during-tx;
 	rs485-enabled;
+	rs485-rts-active-high;
+	rs485-rts-delay = <1 1>;
 	status = "okay";
 };
 
