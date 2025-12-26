@@ -121,7 +121,7 @@
                 compatible = "linux,wdt-gpio";
                 gpios = <&pinctrl RZT2H_GPIO(11, 6) GPIO_ACTIVE_HIGH>;
                 hw_algo = "toggle";
-                always-running;
+                //always-running;
                 hw_margin_ms = <1000>;
         };
 
