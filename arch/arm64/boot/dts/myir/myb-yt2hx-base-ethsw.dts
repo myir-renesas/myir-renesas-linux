@@ -129,13 +129,38 @@
 		compatible = "gpio-keys";
 		button@1 {
 				label = "User";
-				interrupt-parent = <&pinctrl>;
+				interrupt-parent = <&gic>;
 				interrupts = <GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;  // IRQ15
+				ebounce-interval = <20>;
 				gpio-key,wakeup;
 				linux,code = <103>;
 		};
     };
 
+     mtl_rx_setup: rx-queues-config {
+                snps,rx-queues-to-use = <1>;
+                queue0 {
+                };
+    };
+
+    mtl_tx_setup: tx-queues-config {
+                snps,tx-queues-to-use = <3>;
+                snps,tx-sched-wrr;
+                queue0 {
+                        snps,weight = <0x10>;
+                        snps,dcb-algorithm;
+                };
+
+                queue1 {
+                        snps,weight = <0x10>;
+                        snps,dcb-algorithm;
+                };
+
+                queue2 {
+                        snps,weight = <0x10>;
+                        snps,dcb-algorithm;
+                };
+     };
 };
 
 &pinctrl {
@@ -264,6 +289,7 @@
 			slew-rate       = <1>;
 			drive-strength  = <3>;
 	};
+
 
 	eth1_pins: ethss_1 {
 		pinmux = <RZT2H_PORT_PINMUX(24, 5, 0x0F)>,      /* ETH1_TXCLK */
@@ -617,9 +643,14 @@
 	phy-mode = "mii";
 	pcs-handle = <&mii_conv3>;
 	status = "okay";
-	phy-reset-gpios = <&pinctrl RZT2H_GPIO(0, 5) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio1_pins>;
+	phy-reset-gpios = <&pinctrl RZT2H_GPIO(0, 5) GPIO_ACTIVE_HIGH>;
+	enable-time-based-scheduling;
+        snps,force_thresh_dma_mode;
+        snps,tx_threshold = <128>;
+        snps,mtl-tx-config = <&mtl_tx_setup>;
+        snps,mtl-rx-config = <&mtl_rx_setup>;
 
 	mdio {
 		#address-cells = <1>;
@@ -629,8 +660,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+			vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <3>;
 		};
@@ -645,6 +676,11 @@
 	phy-reset-gpios = <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio2_pins>;
+	enable-time-based-scheduling;
+        snps,force_thresh_dma_mode;
+        snps,tx_threshold = <128>;
+        snps,mtl-tx-config = <&mtl_tx_setup>;
+        snps,mtl-rx-config = <&mtl_rx_setup>;
 
 	mdio {
 		#address-cells = <1>;
@@ -654,8 +690,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+			vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <2>;
 		};
@@ -713,8 +749,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+  			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+                        vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <0>;
 		};
@@ -723,8 +759,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+  			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+                        vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <1>;
 		};

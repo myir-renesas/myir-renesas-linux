@@ -196,6 +196,7 @@ static void features_init(void)
 	linkmode_set_bit_array(phy_10gbit_fec_features_array,
 			       ARRAY_SIZE(phy_10gbit_fec_features_array),
 			       phy_10gbit_fec_features);
+
 }
 
 void phy_device_free(struct phy_device *phydev)
@@ -1854,7 +1855,6 @@ static int genphy_config_advert(struct phy_device *phydev)
 	 */
 	if (!(bmsr & BMSR_ESTATEN))
 		return changed;
-
 	adv = linkmode_adv_to_mii_ctrl1000_t(phydev->advertising);
 
 	err = phy_modify_changed(phydev, MII_CTRL1000,
@@ -1864,6 +1864,7 @@ static int genphy_config_advert(struct phy_device *phydev)
 		return err;
 	if (err > 0)
 		changed = 1;
+
 
 	return changed;
 }
@@ -1956,10 +1957,8 @@ EXPORT_SYMBOL(genphy_setup_forced);
 static int genphy_setup_master_slave(struct phy_device *phydev)
 {
 	u16 ctl = 0;
-
 	if (!phydev->is_gigabit_capable)
 		return 0;
-
 	switch (phydev->master_slave_set) {
 	case MASTER_SLAVE_CFG_MASTER_PREFERRED:
 		ctl |= CTL1000_PREFER_MASTER;
@@ -2443,7 +2442,7 @@ int genphy_soft_reset(struct phy_device *phydev)
 	if (ret)
 		return ret;
 
-	/* BMCR may be reset to defaults */
+	/*  MCR may be reset to defaults */
 	if (phydev->autoneg == AUTONEG_DISABLE)
 		ret = genphy_setup_forced(phydev);
 
@@ -2526,7 +2525,8 @@ EXPORT_SYMBOL(genphy_suspend);
 
 int genphy_resume(struct phy_device *phydev)
 {
-	return phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN);
+	phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN);
+	return genphy_config_aneg(phydev);
 }
 EXPORT_SYMBOL(genphy_resume);
 

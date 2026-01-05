@@ -2867,7 +2867,6 @@ static int stmmac_open(struct net_device *dev)
 	int bfsize = 0;
 	u32 chan;
 	int ret;
-
 	ret = pm_runtime_get_sync(priv->device);
 	if (ret < 0) {
 		pm_runtime_put_noidle(priv->device);
@@ -3012,7 +3011,6 @@ static int stmmac_release(struct net_device *dev)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 	u32 chan;
-
 	if (device_may_wakeup(priv->device))
 		phylink_speed_down(priv->phylink, false);
 	/* Stop and disconnect the PHY */
@@ -5396,7 +5394,6 @@ int stmmac_resume(struct device *dev)
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct stmmac_priv *priv = netdev_priv(ndev);
 	int ret;
-
 	if (!netif_running(ndev))
 		return 0;
 
@@ -5417,7 +5414,6 @@ int stmmac_resume(struct device *dev)
 		if (priv->mii)
 			stmmac_mdio_reset(priv->mii);
 	}
-
 	if (priv->plat->serdes_powerup) {
 		ret = priv->plat->serdes_powerup(ndev,
 						 priv->plat->bsp_priv);
@@ -5449,6 +5445,7 @@ int stmmac_resume(struct device *dev)
 	stmmac_restore_hw_vlan_rx_fltr(priv, ndev, priv->hw);
 
 	stmmac_enable_all_queues(priv);
+	stmmac_start_all_dma(priv);
 
 	mutex_unlock(&priv->lock);
 	rtnl_unlock();
@@ -5457,6 +5454,9 @@ int stmmac_resume(struct device *dev)
 
 	netif_device_attach(ndev);
 
+	netif_carrier_off(priv->dev);
+	set_bit(STMMAC_RESET_REQUESTED, &priv->state);
+	stmmac_service_event_schedule(priv);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(stmmac_resume);

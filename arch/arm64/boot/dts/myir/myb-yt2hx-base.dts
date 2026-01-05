@@ -9,6 +9,7 @@
 #include "r9a09g077.dtsi"
 #include <dt-bindings/pinctrl/rzt2h-pinctrl.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 #include <dt-bindings/net/rzt2h-ethss.h>
 #include <dt-bindings/net/mscc-phy-vsc8531.h>
 
@@ -127,14 +128,43 @@
 
     gpio-keys {
 		compatible = "gpio-keys";
-		button@1 {
-				label = "User";
-				interrupt-parent = <&pinctrl>;
-				interrupts = <GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;  // IRQ15
-				gpio-key,wakeup;
-				linux,code = <103>;
+
+                button@1 {
+                        label = "user";
+			 interrupt-parent = <&gic>;  /* 或正确的GPIO中断控制器 */
+			interrupts =<GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;
+			debounce-interval = <20>;
+			gpio-key,wakeup;
+			linux,code = <113>;
+			tatus = "okay";
 		};
     };
+
+
+     mtl_rx_setup: rx-queues-config {
+                snps,rx-queues-to-use = <1>;
+                queue0 {
+                };
+    };
+
+    mtl_tx_setup: tx-queues-config {
+                snps,tx-queues-to-use = <3>;
+                snps,tx-sched-wrr;
+                queue0 {
+                        snps,weight = <0x10>;
+                        snps,dcb-algorithm;
+                };
+
+                queue1 {
+                        snps,weight = <0x10>;
+                        snps,dcb-algorithm;
+                };
+
+                queue2 {
+                        snps,weight = <0x10>;
+                        snps,dcb-algorithm;
+                };
+     };
 
 };
 
@@ -264,6 +294,7 @@
 			slew-rate       = <1>;
 			drive-strength  = <3>;
 	};
+	
 
 	eth1_pins: ethss_1 {
 		pinmux = <RZT2H_PORT_PINMUX(24, 5, 0x0F)>,      /* ETH1_TXCLK */
@@ -286,6 +317,7 @@
 			slew-rate       = <1>;
 			drive-strength  = <3>;
 	};
+
 
 	eth2_pins: ethss_2 {
 		pinmux = <RZT2H_PORT_PINMUX(29, 1, 0x0F)>,      /* ETH2_TXCLK */
@@ -620,10 +652,16 @@
 	phy-handle = <&phy3>;
 	phy-mode = "mii";
 	pcs-handle = <&mii_conv3>;
+	max-speed = <100>;
 	status = "okay";
 	phy-reset-gpios = <&pinctrl RZT2H_GPIO(0, 5) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio1_pins>;
+	enable-time-based-scheduling;
+        snps,force_thresh_dma_mode;
+        snps,tx_threshold = <128>;
+        snps,mtl-tx-config = <&mtl_tx_setup>;
+        snps,mtl-rx-config = <&mtl_rx_setup>;
 
 	mdio {
 		#address-cells = <1>;
@@ -633,8 +671,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+			vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <3>;
 		};
@@ -645,10 +683,16 @@
 	phy-handle = <&phy2>;
 	phy-mode = "mii";
 	pcs-handle = <&mii_conv2>;
+	max-speed = <100>;
 	status = "okay";
-	phy-reset-gpios = <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_HIGH>;
+	//phy-reset-gpios = <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio2_pins>;
+   	enable-time-based-scheduling;
+        snps,force_thresh_dma_mode;
+        snps,tx_threshold = <128>;
+        snps,mtl-tx-config = <&mtl_tx_setup>;
+        snps,mtl-rx-config = <&mtl_rx_setup>;
 
 	mdio {
 		#address-cells = <1>;
@@ -657,9 +701,12 @@
 		phy2: ethernet-phy@2 {
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
+ 			snps,reset-gpio =  <&pinctrl RZT2H_GPIO(17, 5) GPIO_ACTIVE_LOW>;
+                        snps,reset-delays-us = <10000>;
+                        reset-deassert-us = <80000>;
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+			vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <2>;
 		};
@@ -670,7 +717,7 @@
 #if (!SEL_DISPLAY_RGB && SEL_ETH2_CON && SEL_ETH3_CON)
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&pins_refclk>, <&eth0_pins>, <&eth1_pins>, <&eth2_pins>, <&eth3_pins>;
+	pinctrl-0 = <&pins_refclk>, <&eth0_pins>,<&eth1_pins>, <&eth2_pins>, <&eth3_pins>;
 	renesas,ethss-switch-portmanagement = <ETHSS_GMAC0_PORT>;
 #elif (SEL_DISPLAY_RGB && SEL_ETH2_CON && SEL_ETH3_CON)
 	status = "okay";
@@ -717,8 +764,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+			vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <0>;
 		};
@@ -727,8 +774,8 @@
 			compatible = "ethernet-phy-id0007.0772";
 			phy-mode = "mii";
 			max-speed = <100>;
-			vsc8531,led-0-mode = <VSC8531_LINK_ACTIVITY>;
-			vsc8531,led-1-mode = <VSC8531_LINK_ACTIVITY>;
+			vsc8531,led-0-mode = <VSC8531_LINK_100_ACTIVITY>;
+			vsc8531,led-1-mode = <VSC8531_LINK_100_ACTIVITY>;
 			vsc8531,led-1-combine-disable;
 			reg = <1>;
 		};
