@@ -1483,12 +1483,12 @@
         cr52_0_rproc: cr52_0 {
                 compatible = "renesas,rz-cr52";
                 reg = <0x0 0x10000000 0x0 0x001FFFFF>,
-                      <0x2 0x60000000 0x0 0x09000000>;
+                      <0x2 0xe0000000 0x0 0x09000000>;
                 reg-names = "cr52_sram", "cr52_ddr";
                 memory-region = <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
                 renesas,rz-core = <0x0>;
                 renesas,rz-swint = <10>;
-                renesas,rz-rsctbl = <0x2 0x60000000>;
+                renesas,rz-rsctbl = <0x2 0xe0000000>;
                 renesas,rz-start_address = <0x10061000>;
                 status = "okay";
         	};
@@ -1496,12 +1496,12 @@
         cr52_1_rproc: cr52_1 {
                 compatible = "renesas,rz-cr52";
                 reg = <0x0 0x10000000 0x0 0x001FFFFF>,
-                      <0x2 0x60000000 0x0 0x09000000>;
+                      <0x2 0xe0000000 0x0 0x09000000>;
                 reg-names = "cr52_sram", "cr52_ddr";
                 memory-region = <&vdev0vring0>, <&vdev0vring1>, <&vdev0buffer>;
                 renesas,rz-core = <0x1>;
                 renesas,rz-swint = <11>;
-                renesas,rz-rsctbl = <0x2 0x60000000>;
+                renesas,rz-rsctbl = <0x2 0xe0000000>;
                 renesas,rz-start_address = <0x10061000>;
                 status = "okay";
         	};
@@ -1533,39 +1533,39 @@
 
 	};
 
-     vring-ctl0@261000000 {
+     vring-ctl0@2e1000000 {
              compatible = "vring_uio";
-             reg = <0x02 0x61000000 0x0 0x100000>;
+             reg = <0x02 0xe1000000 0x0 0x100000>;
              no-map;
      };
 
-     vring-ctl1@261100000 {
+     vring-ctl1@2e1100000 {
              compatible = "vring_uio";
-             reg = <0x02 0x61100000 0x0 0x100000>;
+             reg = <0x02 0xe1100000 0x0 0x100000>;
              no-map;
      };
 
-     vring-shm0@261200000 {
+     vring-shm0@2e1200000 {
              compatible = "shm_uio";
-             reg = <0x02 0x61200000 0x0 0x300000>;
+             reg = <0x02 0xe1200000 0x0 0x300000>;
              no-map;
      };
 
-     vring-shm1@261500000 {
+     vring-shm1@2e1500000 {
              compatible = "shm_uio";
-             reg = <0x02 0x61500000 0x0 0x300000>;
+             reg = <0x02 0xe1500000 0x0 0x300000>;
              no-map;
      };
 
-     rsctbl@260000000 {
+     rsctbl@2e0000000 {
              compatible = "shm_uio";
-             reg = <0x02 0x60000000 0x0 0x1000>;
+             reg = <0x02 0xe0000000 0x0 0x1000>;
              no-map;
      };
 
-     intercpu-shm@260001000 {
+     intercpu-shm@2e0001000 {
              compatible = "shm_uio";
-             reg = <0x02 0x60001000 0x0 0x1000>;
+             reg = <0x02 0xe0001000 0x0 0x1000>;
              no-map;
      };
 

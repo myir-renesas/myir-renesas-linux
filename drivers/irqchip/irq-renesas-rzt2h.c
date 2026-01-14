@@ -30,7 +30,8 @@
 #define NS_PORTNF_MD		0x0C
 #define S_PORTNF_MD		0x0C
 #define NS_PORTNF_MD_INIT	(0x3fffffff)
-#define S_PORTNF_MD_INIT	(0x3F)
+//#define S_PORTNF_MD_INIT	(0x3F)
+#define S_PORTNF_MD_INIT	(0x15)
 #define DMAC0_RSSELi(i)		0x7D0 + 0x04 * (i) /* DMAC Unit 0 Resource Select Register i */
 #define DMAC1_RSSELi(i)         0x7E8 + 0x04 * (i) /* DMAC Unit 1 Resource Select Register i */
 #define DMAC2_RSSELi(i)         0x800 + 0x04 * (i) /* DMAC Unit 2 Resource Select Register i */
@@ -94,7 +95,10 @@ static int irqc_irq_set_type(struct irq_data *d, unsigned int type)
 			tmp |= (value << (hw_irq * 2));
 			writel(tmp, priv->base1 + S_PORTNF_MD);
 		}
+		pr_err(">>>irqc_irq_set_type: irq=%d type=%u, value=0x%x\n", hw_irq, type, value);
 	}
+
+	pr_err(">>>irqc_irq_set_type called\n");
 
 	return 0;
 }
@@ -176,6 +180,14 @@ EXPORT_SYMBOL(register_dmac_req_signal);
 
 static irqreturn_t irqc_irq_handler(int irq, void *dev_id)
 {
+	struct irqc_irq *irqc = (struct irqc_irq *)dev_id;
+	struct irqc_priv *priv = irqc->priv;
+	int virq;
+
+
+	virq = irq_find_mapping(priv->irq_domain, irqc->hw_irq);
+
+	generic_handle_irq(virq);
 	return IRQ_HANDLED;
 }
 
@@ -274,6 +286,8 @@ static int irqc_probe(struct platform_device *pdev)
 		goto err1;
 	}
 
+
+
 	priv->gc = irq_get_domain_generic_chip(priv->irq_domain, 0);
 	priv->gc->reg_base = priv->base;
 	priv->gc->chip_types[0].chip.irq_set_type = irqc_irq_set_type;
@@ -287,18 +301,16 @@ static int irqc_probe(struct platform_device *pdev)
 	/* Initialized with BOTH_EDGE_LEVEL */
 	writel(NS_PORTNF_MD_INIT, priv->base + NS_PORTNF_MD);
 	writel(S_PORTNF_MD_INIT, priv->base1 + S_PORTNF_MD);
-
-#if 0
+	pr_err(">>>irqc_probe called, priv->number_of_irqs = %d\n", priv->number_of_irqs);
 	/* request interrupts one by one */
 	for (k = 0; k < priv->number_of_irqs; k++) {
 		if (request_irq(priv->irq[k].requested_irq, irqc_irq_handler,
-					0, name, &priv->irq[k])) {
+				0, name, &priv->irq[k])) {
 		dev_err(&pdev->dev, "failed to request IRQ\n");
 			ret = -ENOENT;
 			goto err2;
 		}
 	}
-#endif
 
 	dev_info(&pdev->dev, "driving %d irqs\n", priv->number_of_irqs);
 

@@ -13,12 +13,12 @@
 	/delete-property/ enable-method;
 };
 
-/delete-node/ &{/vring-ctl0@261000000};
-/delete-node/ &{/vring-ctl1@261100000};
-/delete-node/ &{/vring-shm0@261200000};
-/delete-node/ &{/vring-shm1@261500000};
-/delete-node/ &{/rsctbl@260000000};
-/delete-node/ &{/intercpu-shm@260001000};
+/delete-node/ &{/vring-ctl0@2e1000000};
+/delete-node/ &{/vring-ctl1@2e1100000};
+/delete-node/ &{/vring-shm0@2e1200000};
+/delete-node/ &{/vring-shm1@2e1500000};
+/delete-node/ &{/rsctbl@2e0000000};
+/delete-node/ &{/intercpu-shm@2e0001000};
 
 / {
 	vring-ctl0@207000000 {

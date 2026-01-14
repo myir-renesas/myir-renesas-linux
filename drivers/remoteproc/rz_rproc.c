@@ -9,38 +9,48 @@
 #include <linux/regmap.h>
 #include <linux/pm_runtime.h>
 #include <linux/delay.h>
+#include <linux/crc32.h>
 
 #include "remoteproc_internal.h"
 
-#define CR52_SRAM_START 	(0x10000000)
-#define CR52_SRAM_END		(0x101FFFFF)
-#define CR52_DDR_START		(0xE0000000)
-#define CR52_DDR_END		(0xE1FFFFFF)
-#define CA55_SRAM_START 	(0x00000000)
-#define CA55_DDR_START		(0x180000000)
-#define CA55_DDR_CR52_START (0x260000000)
-#define CA55_DDR_CR52_END	(0x261FFFFFF)
-#define CR52_TO_CA55_MASK	(0x0FFFFFFFF)
+#define CR52_ATCM_START        (0x00000000)
+#define CR52_ATCM_END          (0x0007FFF0)
+#define CR52_ATCM_VECT_SIZE    (0x00000080)
+#define CR52_ATCM_TEXT_OFFSET  (0x00000100)
+#define CR52_BTCM_START        (0x00100000)
+#define CR52_BTCM_END          (0x0010FFF0)
+#define CR52_BTCM_OFFSET       (0x00002000)
 
-#define RSTSR0				(0x80280200)
-#define SWRCPU0 			(0x81280220)
-#define SWRCPU1 			(0x81280224)
-#define MSTPCRN 			(0x81280334)
-#define SSTPCR7 			(0x8129020C)
-#define NS_SWINT			(0x802A0000)
-#define PRCRN				(0x80294200)
-#define PRCRS				(0x81296000)
-#define CPU1HALT			(0x81295010)
+#define CR52_SRAM_START 		(0x10000000)
+#define CR52_SRAM_BASE			(0x10001000)
+#define CR52_SRAM_END			(0x101FFFFF)
+#define CR52_DDR_START			(0xE0000000)
+#define CR52_DDR_END			(0xE1FFFFFF)
+#define CA55_SRAM_START 		(0x00000000)
+#define CA55_DDR_START			(0x200000000)
+#define CA55_DDR_CR52_START     (0x2E0000000)
+#define CA55_DDR_CR52_END		(0x2E1FFFFFF)
+#define CR52_TO_CA55_MASK		(0x0FFFFFFFF)
+
+#define RSTSR0					(0x80280200)
+#define SWRCPU0 				(0x81280220)
+#define SWRCPU1 				(0x81280224)
+#define MSTPCRN 				(0x81280334)
+#define SSTPCR7 				(0x8129020C)
+#define NS_SWINT				(0x802A0000)
+#define PRCRN					(0x80294200)
+#define PRCRS					(0x81296000)
+#define CPU1HALT				(0x81295010)
 
 #define BSP_PRV_RESET_KEY								(0x4321A501)
 #define BSP_PRV_RESET_KEY_AUTO_RELEASE					(0x4321A502)
 #define BSP_PRV_RESET_RELEASE_KEY						(0x00000000)
 #define BSP_PRV_ATCM_AXIS_CR520_ADDRESS 				(0x20000000)
+#define BSP_PRV_BTCM_AXIS_CR520_ADDRESS 				(0x20100000)
 #define BSP_PRV_ATCM_AXIS_CR521_ADDRESS 				(0x21000000)
+#define BSP_PRV_BTCM_AXIS_CR521_ADDRESS 				(0x21100000)
 #define BSP_PRV_IMAGE_INFO_BRANCH_INSTRUCTION_CR520 	(0xE51FF004)
 #define BSP_PRV_IMAGE_INFO_BRANCH_INSTRUCTION_CR521 	(0xE51FF000)
-#define BSP_PRV_IMAGE_INFO_BRANCH_ADDRESS_CR520 		(0x10061000)
-#define BSP_PRV_IMAGE_INFO_BRANCH_ADDRESS_CR521 		(0x10061000)
 #define BSP_PRV_PRCR_KEY								(0x0000A500)
 #define PRCR_WRITE_ENABLE_ALL_MASK						(0x0000000F)
 #define CR520_MODULE_STOP_MASK							(0x00000001)
@@ -52,16 +62,10 @@
 
 #define RSC_TBL_SIZE			(0x1000)
 
-#define NS_SWINT_MIN_CHANNEL		(0)
-#define NS_SWINT_MAX_CHANNEL		(13)
+#define NS_SWINT_MIN_CHANNEL	(0)
+#define NS_SWINT_MAX_CHANNEL	(13)
 
 struct rz_rproc_pdata {
-	struct reset_control *reset2;
-	struct reset_control *reset0;
-	struct reset_control *reset1;
-	struct regmap *cpg_regmap;
-	struct regmap *sysc_regmap;
-	u32 bootaddr[2];
 	u32 core;
 	u32 swint;
 	u32 start_addr;
@@ -115,7 +119,7 @@ static int rz_rproc_prepare(struct rproc *rproc)
 	for (i = 0; i < pdev->num_resources; i++) {
 		res = pdev->resource + i;
 
-		/* No need to translate pa to da, RZ/G3S use same map */
+		/* No need to translate pa to da */
 		da = res->start;
 
 		mem = rproc_mem_entry_init(dev, NULL,
@@ -139,11 +143,11 @@ static int rz_rproc_prepare(struct rproc *rproc)
 			return -EINVAL;
 		}
 
-		if (rmem->base > U64_MAX){
+		if (rmem->base > U64_MAX) {
 			return -EINVAL;
 		}
 
-		/* No need to translate pa to da, RZ/G3S use same map */
+		/* No need to translate pa to da */
 		da = rmem->base;
 
 		/*  No need to map vdev buffer */
@@ -175,16 +179,26 @@ static int rz_rproc_start(struct rproc *rproc)
 {
 	struct device *dev = rproc->dev.parent;
 	struct rz_rproc_pdata *pdata = rproc->priv;
+	static u32 curr_data_cr520, prev_data_cr520;
+	static u32 curr_data_cr521, prev_data_cr521;
+	static bool firmware_loaded_cr520;
+	static bool firmware_loaded_cr521;
+	void __iomem *sysram_base;
 	void __iomem *atcm_base_0;
 	void __iomem *atcm_base_1;
+	void __iomem *btcm_base_0;
+	void __iomem *btcm_base_1;
 	void __iomem *prcrs_base;
 	void __iomem *prcrn_base;
 	void __iomem *cpu1halt_base;
 	void __iomem *sstpcr7_base;
 	void __iomem *reg_base1;
 	void __iomem *reg_base2;
+	void __iomem *src;
+	void __iomem *dst;
+	size_t size;
 	u32 reg_val;
-
+	
 	/* Ioremap used register*/
 	prcrs_base = ioremap(PRCRS, 0x4);	
 	if (!prcrs_base) {
@@ -193,19 +207,37 @@ static int rz_rproc_start(struct rproc *rproc)
 	}
 
 	prcrn_base = ioremap(PRCRN, 0x4);	
-	if (!prcrs_base) {
+	if (!prcrn_base) {
 		dev_err(&rproc->dev,"Failed to map memory\n");
 		return -ENOMEM;
 	}
 
-	atcm_base_0 = ioremap(BSP_PRV_ATCM_AXIS_CR520_ADDRESS, 0x4);
+	atcm_base_0 = ioremap(BSP_PRV_ATCM_AXIS_CR520_ADDRESS, (CR52_ATCM_END - CR52_ATCM_START));
 	if (!atcm_base_0) {
 		dev_err(&rproc->dev, "Failed to map memory\n");
 		return -ENOMEM;
 	}
 
-	atcm_base_1 = ioremap(BSP_PRV_ATCM_AXIS_CR521_ADDRESS, 0x8);
+	atcm_base_1 = ioremap(BSP_PRV_ATCM_AXIS_CR521_ADDRESS, (CR52_ATCM_END - CR52_ATCM_START));
 	if (!atcm_base_1) {
+		dev_err(&rproc->dev, "Failed to map memory\n");
+		return -ENOMEM;
+	}
+
+	btcm_base_0 = ioremap(BSP_PRV_BTCM_AXIS_CR520_ADDRESS, (CR52_BTCM_END - CR52_BTCM_START));
+	if (!btcm_base_0) {
+		dev_err(&rproc->dev, "Failed to map memory\n");
+		return -ENOMEM;
+	}
+
+	btcm_base_1 = ioremap(BSP_PRV_BTCM_AXIS_CR521_ADDRESS, (CR52_BTCM_END - CR52_BTCM_START));
+	if (!btcm_base_1) {
+		dev_err(&rproc->dev, "Failed to map memory\n");
+		return -ENOMEM;
+	}
+
+	sysram_base = ioremap(CR52_SRAM_BASE, (CR52_SRAM_END - CR52_SRAM_BASE));
+	if (!sysram_base) {
 		dev_err(&rproc->dev, "Failed to map memory\n");
 		return -ENOMEM;
 	}
@@ -245,44 +277,156 @@ static int rz_rproc_start(struct rproc *rproc)
 	reg_val = ioread32(prcrs_base) | BSP_PRV_PRCR_KEY | PRCR_WRITE_ENABLE_ALL_MASK;
 	iowrite32(reg_val, prcrs_base);
 
-	if(pdata->core == 0)
-	{
-		/* Store the instruction code to start address of the ATCM of CPU0 via AXIS interface*/
-		iowrite32(BSP_PRV_IMAGE_INFO_BRANCH_INSTRUCTION_CR520, atcm_base_0);
-		iowrite32(pdata->start_addr, atcm_base_0 + 0x4);
+	/* TCM area */
+	if (pdata->start_addr == 0) {
+		/* CR52 CPU0 */
+		if (pdata->core == 0) {
+			/* Store the current firmware data from TCM of CPU0 (mapped to SYSRAM) */
+			src = (u8 __iomem *)sysram_base + CR52_ATCM_TEXT_OFFSET;
+			size = 0x1000;
+			curr_data_cr520 = crc32(~0, src, size);
+			if ((!firmware_loaded_cr520) || (curr_data_cr520 == prev_data_cr520)) {
+				/* Mapping data (.intvec) from ATCM of CPU0 is stored in SYSRAM and transferred to the AXIS interface */
+				src = sysram_base;
+				dst = atcm_base_0;
+				size = CR52_ATCM_VECT_SIZE;
+				if (!firmware_loaded_cr520) {
+					memcpy_toio(dst, src, size);
+				}
 
-		/* Reset CR52_0 and release the reset state by setting 0x4321A502 to SWRCPU0 register */
-		iowrite32(BSP_PRV_RESET_KEY_AUTO_RELEASE, reg_base1 + 0x220);			//SWRCPU0 (0x81280220)
+				/* Mapping data (.text) from ATCM of CPU0 is stored in SYSRAM and transferred to the AXIS interface */
+				src = (u8 __iomem *)sysram_base + CR52_ATCM_TEXT_OFFSET;
+				dst = (u8 __iomem *)atcm_base_0 + CR52_ATCM_TEXT_OFFSET;
+				size = CR52_ATCM_END - CR52_ATCM_TEXT_OFFSET;
+				if (!firmware_loaded_cr520) {
+					memcpy_toio(dst, src, size);
+				}
+
+				/* Mapping data (.loader_text) from BTCM of CPU0 is stored in SYSRAM and transferred to the AXIS interface */
+				src = (u8 __iomem *)sysram_base + (BSP_PRV_BTCM_AXIS_CR520_ADDRESS - BSP_PRV_ATCM_AXIS_CR520_ADDRESS + CR52_BTCM_OFFSET);
+				dst = (u8 __iomem *)btcm_base_0 + CR52_BTCM_OFFSET;
+				size = CR52_BTCM_END - (BSP_PRV_BTCM_AXIS_CR520_ADDRESS - BSP_PRV_ATCM_AXIS_CR520_ADDRESS + CR52_BTCM_OFFSET);
+				if (!firmware_loaded_cr520) {
+					memcpy_toio(dst, src, size);
+				}
+
+				/* Reset CR52_0 and release the reset state by setting 0x4321A502 to SWRCPU0 (0x81280220) register */
+				iowrite32(BSP_PRV_RESET_KEY_AUTO_RELEASE, reg_base1 + 0x220);
+
+				if (!firmware_loaded_cr520) {
+					prev_data_cr520 = curr_data_cr520;
+				}
+
+				firmware_loaded_cr520 = true;
+			} else {
+				dev_err(&rproc->dev, "failed to load firmware\n");
+				return -EINVAL;
+			}
+		}
+
+		/* CR52 CPU1 */
+		else if (pdata->core == 1) {
+			/* Store the current firmware data from TCM of CPU1 (mapped to SYSRAM) */
+			src = (u8 __iomem *)sysram_base + CR52_ATCM_TEXT_OFFSET;
+			size = 0x1000;
+			curr_data_cr521 = crc32(~0, src, size);
+			if ((!firmware_loaded_cr521) || (curr_data_cr521 == prev_data_cr521)) {
+				/* Release from the module stop state by resetting MSTPCRN01 bit in MSTPCRN (0x81280334) register */ 
+				reg_val = ioread32(reg_base1 + 0x334) & (~CR521_MODULE_STOP_MASK);		
+				iowrite32(reg_val, reg_base1 + 0x334);
+
+				/* Release CR52_1 from the reset state by setting 0x00000000 to SWRCPU1 (0x81280224) register. */
+				iowrite32(BSP_PRV_RESET_RELEASE_KEY, reg_base1 + 0x224);
+
+				/* Release from the slave stop state by controlling AXIS1_REQ and AXIS1_ACK bits in SSTPCR7 register. */
+				iowrite32(0x00000000, sstpcr7_base);	
+				do {
+					reg_val = ioread32(sstpcr7_base);
+				} while ((reg_val & SSTPCR7_AXIS1_ACK_MASK) != 0);
+
+				/* Mapping data (.intvec) from ATCM of CPU1 is stored in SYSRAM and transferred to the AXIS interface */
+				src = sysram_base;
+				dst = atcm_base_1;
+				size = CR52_ATCM_VECT_SIZE;
+				if (!firmware_loaded_cr521) {
+					memcpy_toio(dst, src, size);
+				}
+
+				/* Mapping data (.text) from ATCM of CPU1 is stored in SYSRAM and transferred to the AXIS interface */
+				src = (u8 __iomem *)sysram_base + CR52_ATCM_TEXT_OFFSET;
+				dst = (u8 __iomem *)atcm_base_1 + CR52_ATCM_TEXT_OFFSET;
+				size = CR52_ATCM_END - CR52_ATCM_TEXT_OFFSET;
+				if (!firmware_loaded_cr521) {
+					memcpy_toio(dst, src, size);
+				}
+
+				/* Mapping data (.loader_text) from BTCM of CPU1 is stored in SYSRAM and transferred to the AXIS interface */
+				src = (u8 __iomem *)sysram_base + (BSP_PRV_BTCM_AXIS_CR521_ADDRESS - BSP_PRV_ATCM_AXIS_CR521_ADDRESS + CR52_BTCM_OFFSET);
+				dst = (u8 __iomem *)btcm_base_1 + CR52_BTCM_OFFSET;
+				size = CR52_BTCM_END - (BSP_PRV_BTCM_AXIS_CR521_ADDRESS - BSP_PRV_ATCM_AXIS_CR521_ADDRESS + CR52_BTCM_OFFSET);
+				if (!firmware_loaded_cr521) {
+					memcpy_toio(dst, src, size);
+				}
+
+				/* Start instruction fetch by writing 0 to CPU1HALT bit in CPU1HALT register */
+				iowrite32(0x00000000, cpu1halt_base);
+
+				if (!firmware_loaded_cr521) {
+					prev_data_cr521 = curr_data_cr521;
+				}
+				
+				firmware_loaded_cr521 = true;
+			} else {
+				dev_err(&rproc->dev, "failed to load firmware\n");
+				return -EINVAL;
+			}
+		}
 	}
-	else
-	{
-		/* Release from the module stop state by resetting MSTPCRN01 bit in MSTPCRN register */ 
-		reg_val = ioread32(reg_base1 + 0x334) & (~CR521_MODULE_STOP_MASK);		
-		iowrite32(reg_val, reg_base1 + 0x334);					//MSTPCRN (0x81280334)
 
-		/* Release CR52_1 from the reset state by setting 0x00000000 to SWRCPU1 register. */
-		iowrite32(BSP_PRV_RESET_RELEASE_KEY, reg_base1 + 0x224);				//SWRCPU1 (0x81280224)
+	/* System RAM area */
+	else {
+		/* CR52 CPU0 */
+		if (pdata->core == 0) {
+			/* Store the instruction code to start address of the ATCM of CPU0 via AXIS interface*/
+			iowrite32(BSP_PRV_IMAGE_INFO_BRANCH_INSTRUCTION_CR520, atcm_base_0);
+			iowrite32(pdata->start_addr, atcm_base_0 + 0x4);
 
-		/* Release from the slave stop state by controlling AXIS1_REQ and AXIS1_ACK bits in SSTPCR7 register. */
-		iowrite32(0x00000000, sstpcr7_base);	
-		do
-		{
-			reg_val = ioread32(sstpcr7_base);
-		} while (reg_val & SSTPCR7_AXIS1_ACK_MASK != 0);
+			/* Reset CR52_0 and release the reset state by setting 0x4321A502 to SWRCPU0 (0x81280220) register */
+			iowrite32(BSP_PRV_RESET_KEY_AUTO_RELEASE, reg_base1 + 0x220);
+		}
 
-		/* Store the instruction code to start address of the ATCM of CPU1 via AXIS interface */
-		iowrite64(BSP_PRV_IMAGE_INFO_BRANCH_INSTRUCTION_CR521, atcm_base_1);
-		iowrite64(pdata->start_addr, atcm_base_1 + 0x8);
+		/* CR52 CPU1 */
+		else if (pdata->core == 1) {
+			/* Release from the module stop state by resetting MSTPCRN01 bit in MSTPCRN (0x81280334) register */ 
+			reg_val = ioread32(reg_base1 + 0x334) & (~CR521_MODULE_STOP_MASK);		
+			iowrite32(reg_val, reg_base1 + 0x334);
 
-		/* Start instruction fetch by writing 0 to CPU1HALT bit in CPU1HALT register */
-		iowrite32(0x00000000, cpu1halt_base);
+			/* Release CR52_1 from the reset state by setting 0x00000000 to SWRCPU1 (0x81280224) register. */
+			iowrite32(BSP_PRV_RESET_RELEASE_KEY, reg_base1 + 0x224);
+
+			/* Release from the slave stop state by controlling AXIS1_REQ and AXIS1_ACK bits in SSTPCR7 register. */
+			iowrite32(0x00000000, sstpcr7_base);	
+			do {
+				reg_val = ioread32(sstpcr7_base);
+			} while ((reg_val & SSTPCR7_AXIS1_ACK_MASK) != 0);
+
+			/* Store the instruction code to start address of the ATCM of CPU1 via AXIS interface */
+			iowrite64(BSP_PRV_IMAGE_INFO_BRANCH_INSTRUCTION_CR521, atcm_base_1);
+			iowrite64(pdata->start_addr, atcm_base_1 + 0x8);
+
+			/* Start instruction fetch by writing 0 to CPU1HALT bit in CPU1HALT register */
+			iowrite32(0x00000000, cpu1halt_base);
+		}
 	}
 
 	/* ioumap register */
+	iounmap(sysram_base);
 	iounmap(prcrs_base);
 	iounmap(prcrn_base);
 	iounmap(atcm_base_0);
 	iounmap(atcm_base_1);
+	iounmap(btcm_base_0);
+	iounmap(btcm_base_1);
 	iounmap(cpu1halt_base);
 	iounmap(sstpcr7_base);
 	iounmap(reg_base1);
@@ -346,8 +490,7 @@ static int rz_rproc_stop(struct rproc *rproc)
 	iowrite32(reg_val, prcrs_base);
 
 	/* Set software interrupt to change CR52 to WFI state */
-	if((NS_SWINT_MAX_CHANNEL >= pdata->swint) && (pdata->swint >= NS_SWINT_MIN_CHANNEL))
-	{
+	if((NS_SWINT_MAX_CHANNEL >= pdata->swint) && (pdata->swint >= NS_SWINT_MIN_CHANNEL)) {
 		reg_val = 0x01 << (pdata->swint);
 		iowrite32(reg_val, swint_base);
 	}
@@ -356,12 +499,10 @@ static int rz_rproc_stop(struct rproc *rproc)
 	reg_val = ioread32(rstsr0_base);
 	iowrite32(CLEAR_RESET_STATUS_VALUE, rstsr0_base);
 
-	if(pdata->core == 1)
-	{
+	if(pdata->core == 1) {
 		/* Transfer CR52_1 to reset state */
 		iowrite32(BSP_PRV_RESET_KEY, swrcpu1_base);
-		do
-		{
+		do {
 			reg_val = ioread32(swrcpu1_base);
 		} while (reg_val != 0x01);
 	}
@@ -388,24 +529,29 @@ static void rz_rproc_kick(struct rproc *rproc, int vqid)
 }
 
 static int cr52_to_ca55(u64 *da)
-{
-	printk("da=%lx\n",*da);
-	if ((CR52_SRAM_END >= *da) && (*da >= CR52_SRAM_START)) {
+{	
+	if ((CR52_ATCM_END >= *da) && (*da >= CR52_ATCM_START)) {
+		*da = CR52_SRAM_BASE + *da;
+        return 0;
+    } 
+	
+	else if ((CR52_BTCM_END >= *da) && (*da >= (CR52_BTCM_START + CR52_BTCM_OFFSET))) {
+		*da = ((CR52_SRAM_BASE + CR52_BTCM_START + CR52_BTCM_OFFSET) + (*da - CR52_BTCM_START - CR52_BTCM_OFFSET));
+        return 0;
+    }
+	
+ 	else if ((CR52_SRAM_END >= *da) && (*da >= CR52_SRAM_START)) {
 		*da = CA55_SRAM_START + *da;
-		printk("ca_sram=%lx da=%lx end-%lx\n",CA55_SRAM_START,*da,CR52_SRAM_END);
 		return 0;
 	}
+	
 	else if ((CR52_DDR_END >= *da) && (*da >= CR52_DDR_START)) {
 		*da = CA55_DDR_START + *da;
-		printk("CA55_DDR_START=%lx %lx\n",CA55_DDR_START,CA55_DDR_START + *da);
-		printk("cr52_ddr_end1=%lx da=%lx CR52_DDR_START=%x\n",CR52_DDR_END,*da,CR52_DDR_START);
 		return 0;
 	}
+	
 	else
-	{
-		printk("cr52_ddr_end=%lx da=%lx CR52_DDR_START=%lx\n",CR52_DDR_END,*da,CR52_DDR_START);
 		return -EINVAL;
-	}
 }
 
 static void *rz_rproc_da_to_va(struct rproc *rproc, u64 da, size_t len)
@@ -416,10 +562,10 @@ static void *rz_rproc_da_to_va(struct rproc *rproc, u64 da, size_t len)
 	int ret;
 
 	/* rproc_da_to_va() is called in many places. @da value can either be
-	 * the address of segments in .elf file which is in CM33 address space
+	 * the address of segments in .elf file which is in CR52 address space
 	 * or the address of .resource_table's trace buffer which is in CA55
 	 * address space. Trace buffer is expected to be in the dedicated memory
-	 * region for CM33 in DDR. Here, we first check if @da is address of
+	 * region for CR52 in DDR. Here, we first check if @da is address of
 	 * trace buffer or segments then have corresponding action.
 	 */
 	if ((CA55_DDR_CR52_END >= da) && (da >= CA55_DDR_CR52_START)) {

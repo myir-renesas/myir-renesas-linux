@@ -9,6 +9,7 @@
 #include "r9a09g077.dtsi"
 #include <dt-bindings/pinctrl/rzt2h-pinctrl.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 #include <dt-bindings/net/rzt2h-ethss.h>
 #include <dt-bindings/net/mscc-phy-vsc8531.h>
 
@@ -65,27 +66,27 @@
 			reg = <0x0 0xD0000000 0x0 0x10000000>;
 		};
 		
-        cr52ddr: cr52ddr@260000000 {
+        cr52ddr: cr52ddr@2e0000000 {
             compatible = "shared-dma-pool";
-            reg = <0x02 0x60000000 0x0 0x9000000>;
+            reg = <0x02 0xe0000000 0x0 0x9000000>;
             no-map;
         };
         
-        vdev0vring0: vdev0vring0@0x261000000 {
+        vdev0vring0: vdev0vring0@0x2e1000000 {
             compatible = "shared-dma-pool";
-            reg = <0x2 0x61000000 0x0 0x50000>;
+            reg = <0x2 0xe1000000 0x0 0x50000>;
             no-map;
         };
         
-        vdev0vring1: vdev0vring1@0x261050000 {
+        vdev0vring1: vdev0vring1@0x2e1050000 {
             compatible = "shared-dma-pool";
-            reg = <0x2 0x61050000 0x0 0x50000>;
+            reg = <0x2 0xe1050000 0x0 0x50000>;
             no-map;
         };
         
-        vdev0buffer: vdev0buffer@0x261200000 {
+        vdev0buffer: vdev0buffer@0x2e1200000 {
             compatible = "shared-dma-pool";
-            reg = <0x2 0x61200000 0x0 0x300000>;
+            reg = <0x2 0xe1200000 0x0 0x300000>;
             no-map;
         };
 
@@ -127,14 +128,17 @@
 
     gpio-keys {
 		compatible = "gpio-keys";
-		button@1 {
-				label = "User";
-				interrupt-parent = <&gic>;
-				interrupts = <GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;  // IRQ15
-				ebounce-interval = <20>;
-				gpio-key,wakeup;
-				linux,code = <103>;
-		};
+         	button@1 {
+                        label = "user";
+                         interrupt-parent = <&intc_ex>;  /* 或正确的GPIO中断控制器 */
+                        interrupts =<15 IRQ_TYPE_EDGE_FALLING>;
+                        debounce-interval = <20>;
+                        linux,input-type= <EV_KEY>;
+                        gpio-key,wakeup;
+                        linux,code = <113>;
+                        status = "okay";
+                };
+
     };
 
      mtl_rx_setup: rx-queues-config {

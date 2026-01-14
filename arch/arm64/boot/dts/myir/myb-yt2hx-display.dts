@@ -180,7 +180,9 @@
 	ft5x06: ft5x06@38 {
 		compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
 		reg = <0x38>;
-		interrupts = <GIC_SPI 19 IRQ_TYPE_EDGE_RISING>;   // IRQ3
+		interrupt-parent = <&intc_ex>;
+		interrupts =<3 IRQ_TYPE_EDGE_RISING>;
+		//interrupts = <GIC_SPI 19 IRQ_TYPE_EDGE_RISING>;   // IRQ3
 		reset-gpios = <&pinctrl RZT2H_GPIO(2, 4) GPIO_ACTIVE_HIGH>;
 		touchscreen-size-x=<800>;
 		touchscreen-size-y=<480>;
